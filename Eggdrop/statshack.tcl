@@ -28,7 +28,7 @@ bind nick - "*" addnew
 bind cron - "0 * * * *" purgestats
 
 # Proc off adding nicks
-proc addstats {minute hour day month wweekday} {
+proc addstats {minute hour day month weekday} {
 	global badnicks
 	foreach chan [channels] {
 		foreach user [chanlist $chan] {
@@ -45,7 +45,7 @@ proc addstats {minute hour day month wweekday} {
 }
 
 # Proc off changing hosts
-proc chghost {minute hour day month wweekday} {
+proc chghost {minute hour day month weekday} {
 	foreach user [userlist] {
 		set h [getuser $user HOSTS]
 		if {$h eq "${user}!*@*"} {
