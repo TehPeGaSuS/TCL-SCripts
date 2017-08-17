@@ -33,7 +33,7 @@ proc addstats {minute hour day month weekday} {
 	foreach chan [channels] {
 		foreach user [chanlist $chan] {
 			if {![validuser $user]} {
-				foreach bad [split $badnicks] {
+				foreach bad $badnicks {
 					if {![string match -nocase "$bad" $user]} {
 						adduser $user ${user}!*@*
 						putlog "Added $user to StatsMod"
@@ -62,7 +62,7 @@ proc chghost {minute hour day month weekday} {
 proc addnew {nick uhost hand chan newnick} {
 	global badnicks
 	if {![validuser $newnick]} {
-		foreach bad [split $badnicks] {
+		foreach bad $badnicks {
 			if {![string match -nocase "$bad" $newnick]} {
 				adduser $newnick ${newnick}!*@*
 				putlog "Added $newnick to StatsMod"
@@ -75,7 +75,7 @@ proc addnew {nick uhost hand chan newnick} {
 proc purgestats {minute hour day month weekday} {
 	global badnicks
 	foreach user [userlist] {
-		foreach bad [split $badnicks] {
+		foreach bad $badnicks {
 			if {![string match -nocase "$bad" $user]} {
 				deluser $user
 				putlog "Bad nick/pattern detected and removed"
