@@ -82,3 +82,5 @@ proc purgestats {minute hour day month weekday} {
 		}
 	}
 }
+
+putlog "StatsMod Hack by James @ PTirc loadded"
