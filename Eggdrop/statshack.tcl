@@ -78,6 +78,7 @@ proc purgestats {minute hour day month weekday} {
 		foreach bad [split $badnicks] {
 			if {![string match -nocase "$bad" $user]} {
 				deluser $user
+				putlog "Bad nick/pattern detected and removed"
 			}
 		}
 	}
