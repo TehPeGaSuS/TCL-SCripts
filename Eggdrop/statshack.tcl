@@ -13,7 +13,7 @@
 
 # Badnick list
 # Set here the nicks/pattern that you don't want to be added to StatsMod (good to exclude bots and those webchat nicknames)
-set badnicks {"*mibbit*" "*webchat*" "botnick"}
+set badnicks [list mibbit webchat botnick]
 
 # Adding users to the userfile
 bind cron - "*/5 * * * *" addstats
@@ -34,7 +34,7 @@ proc addstats {minute hour day month weekday} {
 		foreach user [chanlist $chan] {
 			if {![validuser $user]} {
 				foreach bad $badnicks {
-					if {![string match -nocase "$bad" $user]} {
+					if {![string match -nocase "$bad" $user] || ![string match -nocase "*${bad}*" $user]} {
 						adduser $user ${user}!*@*
 						putlog "Added $user to StatsMod"
 					}
@@ -63,7 +63,7 @@ proc addnew {nick uhost hand chan newnick} {
 	global badnicks
 	if {![validuser $newnick]} {
 		foreach bad $badnicks {
-			if {![string match -nocase "$bad" $newnick]} {
+			if {![string match -nocase "$bad" $newnick] || ![string match -nocase "*${bad}*" $newnick]} {
 				adduser $newnick ${newnick}!*@*
 				putlog "Added $newnick to StatsMod"
 			}
@@ -76,7 +76,7 @@ proc purgestats {minute hour day month weekday} {
 	global badnicks
 	foreach user [userlist] {
 		foreach bad $badnicks {
-			if {![string match -nocase "$bad" $user]} {
+			if {![string match -nocase "$bad" $user] || ![string match -nocase "*${bad}*" $user]} {
 				deluser $user
 				putlog "Bad nick/pattern detected and removed"
 			}
