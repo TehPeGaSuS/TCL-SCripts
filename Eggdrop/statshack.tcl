@@ -11,9 +11,14 @@
 ## set anti-stats-flag "b|b"
 # Enjoy!
 
+### Configuration ###
+# How many minutes between each add user check?
+set checktime "5"
+### End of configuration ###
+
 ### Binds ###
 # Adding users to the userfile
-bind cron - "*/5 * * * *" addstats
+bind cron - "*/$checktime * * * *" addstats
 
 # Adding new nicks upon nick change to userfile
 bind nick - "*" addnew
