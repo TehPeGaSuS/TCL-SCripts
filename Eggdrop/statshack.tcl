@@ -55,4 +55,4 @@ proc addnew {nick uhost hand chan newnick} {
 }
 ### End of procedures ###
 
-putlog "StatsMod Tracking System Hack loaded"
+putlog "StatsMod Tracking System Hack v0.1 loaded"
