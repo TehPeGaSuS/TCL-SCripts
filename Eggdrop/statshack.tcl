@@ -18,6 +18,7 @@
 ### Configuration ###
 # How many minutes between each add user check?
 set checktime "5"
+
 ### End of configuration ###
 
 ### Binds ###
