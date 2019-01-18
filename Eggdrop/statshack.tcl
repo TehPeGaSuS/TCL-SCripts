@@ -1,7 +1,7 @@
 ######################################
 # THIS IS A WIP! ERRORS ARE EXPECTED #
 ######################################
-
+#
 #################
 # StatsMod Hack #
 #################
@@ -55,4 +55,4 @@ proc addnew {nick uhost hand chan newnick} {
 }
 ### End of procedures ###
 
-putlog "StatsMod Tracking System Hack v0.1 loaded"
+putlog "StatsMod Tracking System Hack v0.2 loaded"
