@@ -30,6 +30,10 @@ proc addstats {minute hour day month weekday} {
 	foreach chan [channels] {
 		foreach user [chanlist $chan] {
 			if {![validuser $user]} {
+				# If user is a Guest, don't add it
+				if {[string match "Guest*" $user]} {
+					return
+				} else {
 				# User doesn't exist. Lets add them to eggdrop userfile
 				adduser $user ${user}!*@*
 			}
