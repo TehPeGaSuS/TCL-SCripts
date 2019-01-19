@@ -40,8 +40,8 @@ proc addstats {minute hour day month weekday} {
 				if {[string match "Guest*" $user]} {
 					return
 				} else {
-				# User doesn't exist. Lets add them to eggdrop userfile
-				adduser $user ${user}!*@*
+					adduser $user ${user}!*@*
+				}
 			}
 		}
 	}
@@ -50,9 +50,13 @@ proc addstats {minute hour day month weekday} {
 # Proc off adding new nicks
 proc addnew {nick uhost hand chan newnick} {
 	if {![validuser $newnick]} {
-		adduser $newnick ${newnick}!*@*
+		if {![string match "Guest*" $newnick]} {
+			adduser $newnick ${newnick}!*@*
+		} else {
+			return 0
+		}
 	}
 }
 ### End of procedures ###
 
-putlog "StatsMod Tracking System Hack v0.2 loaded"
+putlog "StatsMod Hack v0.3 loaded"
