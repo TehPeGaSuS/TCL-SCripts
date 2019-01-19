@@ -37,10 +37,10 @@ proc addstats {minute hour day month weekday} {
 		foreach user [chanlist $chan] {
 			if {![validuser $user]} {
 				# If user is a Guest, don't add it
-				if {[string match "Guest*" $user]} {
-					return
-				} else {
+				if {![string match "Guest*" $user]} {
 					adduser $user ${user}!*@*
+				} else {
+					return 0
 				}
 			}
 		}
