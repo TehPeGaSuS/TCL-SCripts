@@ -1,7 +1,3 @@
-######################################
-# THIS IS A WIP! ERRORS ARE EXPECTED #
-######################################
-
 #################
 # StatsMod Hack #
 #################
@@ -10,7 +6,7 @@
 # I've done it to personal use, so don't expect it to be a super script! :D
 # It's advisable to edit it to fit your needs
 # In order to use this script you have to do a few changes on your stats.conf. They're the following:
-## set autoadd 0
+## set autoadd -1
 ## set use-eggdrop-userfile 1
 ## set anti-autoadd-flags "mnofvb-|mnofvb-"
 ## set anti-stats-flag "b|b"
@@ -19,6 +15,9 @@
 ### Configuration ###
 # How many minutes between each add user check?
 set checktime "5"
+
+# List of badnicks that shouldn't be added
+set badnicks {ChanServ}
 
 ### End of configuration ###
 
@@ -33,14 +32,22 @@ bind nick - "*" addnew
 ### Procedures ###
 # Proc off adding nicks
 proc addstats {minute hour day month weekday} {
+	global badnicks botnick
 	foreach chan [channels] {
 		foreach user [chanlist $chan] {
 			if {![validuser $user]} {
-				# If user is a Guest, don't add it
-				if {![string match "Guest*" $user]} {
+				set isnick 0
+				foreach check $badnicks {
+					if {![string match -nocase "$check" $user]} {
+						continue
+					}
+					if {[string match -nocase "$check" $user] || [string match -nocase $botnick $user]} {
+						set isnick 1
+						break
+					}
+				}
+				if {!$isnick} {
 					adduser $user ${user}!*@*
-				} else {
-					return 0
 				}
 			}
 		}
@@ -49,14 +56,23 @@ proc addstats {minute hour day month weekday} {
 
 # Proc off adding new nicks
 proc addnew {nick uhost hand chan newnick} {
+	global badnicks botnick
 	if {![validuser $newnick]} {
-		if {![string match "Guest*" $newnick]} {
+		set isnick 0
+		foreach check $badnicks {
+			if {![string match -nocase "$check" $newnick]} {
+				continue
+			}
+			if {[string match -nocase "$check" $newnick] || [string match -nocase $botnick $newnick]} {
+				set isnick 1
+				break
+			}
+		}
+		if {!$isnick} {
 			adduser $newnick ${newnick}!*@*
-		} else {
-			return 0
 		}
 	}
 }
 ### End of procedures ###
 
-putlog "StatsMod Hack v0.3 loaded"
+putlog "StatsMod Hack v0.4 loaded"
