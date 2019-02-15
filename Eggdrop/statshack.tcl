@@ -76,3 +76,7 @@ proc addnew {nick uhost hand chan newnick} {
 ### End of procedures ###
 
 putlog "StatsMod Hack v0.4 loaded"
+
+#################
+# End of Script #
+#################
