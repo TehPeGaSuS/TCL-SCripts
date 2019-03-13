@@ -6,6 +6,7 @@
 # I've done it to personal use, so don't expect it to be a super script! :D :P
 # It's advisable to edit it to fit your needs
 # In order to use this script you have to do a few changes on your stats.conf. They're the following:
+#
 ## set autoadd -1
 ## set use-eggdrop-userfile 1
 ## set anti-autoadd-flags "mnofvb-|mnofvb-"
