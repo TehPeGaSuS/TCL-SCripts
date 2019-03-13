@@ -11,6 +11,7 @@
 ## set use-eggdrop-userfile 1
 ## set anti-autoadd-flags "mnofvb-|mnofvb-"
 ## set anti-stats-flag "b|b"
+#
 # Enjoy!
 
 ### Configuration ###
