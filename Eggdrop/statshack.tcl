@@ -16,7 +16,8 @@
 
 ### Configuration ###
 # How many minutes between each add user check?
-set checktime "5"
+set checktime "2"
+set hostfixtime "5"
 
 # List of badnicks that shouldn't be added
 set badnicks {ChanServ}
@@ -26,6 +27,10 @@ set badnicks {ChanServ}
 ### Binds ###
 # Adding users to the userfile
 bind cron - "*/$checktime * * * *" addstats
+bind cron - "*/$hostfixtime * * * *" hostfix
+
+# Fixing user hosts (only for non global mno)
+
 
 # Adding new nicks upon nick change to userfile
 bind nick - "*" addnew
@@ -75,9 +80,20 @@ proc addnew {nick uhost hand chan newnick} {
 		}
 	}
 }
+
+# Proc of fixing hosts
+proc hostfix {minute hour day month weekday} {
+	foreach fix [userlist] {
+		if {![matchattr [nick2hand $fix] mno]} {
+			setuser HOSTS ${fix}!*@*
+		}
+	}
+	return 0
+}
+
 ### End of procedures ###
 
-putlog "StatsMod Hack 10/03/2019 loaded"
+putlog "StatsMod Hack 27/07/2019 loaded"
 
 #################
 # End of Script #
