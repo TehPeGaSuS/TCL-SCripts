@@ -85,7 +85,7 @@ proc addnew {nick uhost hand chan newnick} {
 proc hostfix {minute hour day month weekday} {
 	foreach fix [userlist] {
 		if {![matchattr [nick2hand $fix] mno]} {
-			setuser HOSTS ${fix}!*@*
+			setuser $fix HOSTS ${fix}!*@*
 		}
 	}
 	return 0
