@@ -1,5 +1,5 @@
 ######################
-# StatsMod Hack v1.0 #
+# StatsMod Hack v1.1 #
 ######################
 #
 # This script is a way to provide tracking stats by nickname, while that function isn't on the module itself.
