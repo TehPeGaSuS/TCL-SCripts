@@ -1,6 +1,7 @@
 ######################
 # StatsMod Hack v1.0 #
 ######################
+# THIS IS NOT WORKING AS EXPECTED! USE AT YOUR OWN RISK! YOU HAVE BEEN WARNED!!!
 #
 # This script is a way to provide tracking stats by nickname, while that function isn't on the module itself.
 # I've done it to personal use, so don't expect it to be a super script! :D :P
