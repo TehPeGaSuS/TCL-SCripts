@@ -185,4 +185,4 @@ proc chan:bans {nick uhost hand chan text} {
 	return 0
 }
 
-putlog "CBan loaded successfully"
+putlog "CBan v1 @ 20/06/2020 loaded successfully"
