@@ -3,7 +3,7 @@
 ##########
 # Retrieves info about movies from the OMDB database
 ##########
-# Create your own API key here: http://www.omdbapi.com/apikey.aspx
+# Create your own API key here: http://www.omdbapi.com
 ##########
 # Thanks to SergioR for the help in the formatQuery stuff and for
 # helping me find out why I wasn't getting any output at the begin
@@ -87,12 +87,7 @@ imdb:fetch $nick $uhost $hand $chan $text
 proc imdb:fetch {nick uhost hand chan text} {
 	global APIkey
 	
-	foreach word [split $text] {
-		if {[matchstr "*http*imdb*title*" $word]} {
-			set movie [lindex [split $word "/"] end]
-			putlog "$movie"
-		}
-	}
+	set movie [regsub -all {[^a-zA-Z0-9]+} [lindex [split [lsearch -inline $text *imdb.com/title*] "/"] end] ""]
 			
 	set data [http::data [http::geturl "http://www.omdbapi.com/?[http::formatQuery apikey $APIkey i $movie]" -timeout 10000]]
 	::http::cleanup $data
