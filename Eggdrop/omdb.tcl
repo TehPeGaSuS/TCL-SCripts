@@ -3,7 +3,7 @@
 ##########
 # Retrieves info about movies from the OMDB database
 ##########
-# Create your own API key here: http://www.omdbapi.com
+# Create your own API key here: http://www.omdbapi.com/apikey.aspx
 ##########
 
 ##########
