@@ -5,8 +5,15 @@
 ##########
 # Create your own API key here: http://www.omdbapi.com
 ##########
-# Thanks to SergioR for the help in the formatQuery stuff and for
+
+##########
+# THANKS
+##########
+# SergioR for the help in the formatQuery stuff and for
 # helping me find out why I wasn't getting any output at the begin
+##########
+# Operator873 for the idea of using lsearch to search for the URL in the
+# text sent to the channel
 ##########
 
 ##########
