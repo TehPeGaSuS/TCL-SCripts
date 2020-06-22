@@ -10,6 +10,16 @@
 ##########
 
 ##########
+# CHANGELOG
+##########
+# v1 - Initial script [21/06/2020]
+##########
+# v2 - Added automatic fetching information about a movie, based on the title from IMDb URLs
+# when they are pasted on a channel (works for normal and action messages) [22/06/2020]
+##########
+
+
+##########
 # Configuration
 ##########
 set omdbtrigger "!"
@@ -31,6 +41,9 @@ package require json
 # Binds
 ##########
 bind pub - ${omdbtrigger}omdb imdb:pub
+bind pubm - "*http*imdb*title*" imdb:fetch
+bind ctcp - ACTION imdb:fetch:me
+
 
 ##########
 # End of binds
@@ -62,9 +75,45 @@ proc imdb:pub {nick uhost hand chan text} {
 	set imdbRating [dict get $datadict "imdbRating"]
 	set imdbID [dict get $datadict "imdbID"]
 	
-	putserv "PRIVMSG $chan :\002Title:\002 $Title | \002Released:\002 $Released | \002Duration:\002 $Runtime | \002Rating:\002 $imdbRating | \002IMDb:\002 https://www.imdb.com/title/$imdbID"
+	putserv "PRIVMSG $chan :\002Title:\002 $Title | \002Released:\002 $Released | \002Duration:\002 $Runtime | \002Rating:\002 $imdbRating of 10 | \002IMDb:\002 https://www.imdb.com/title/$imdbID"
 	
 	return 0
 }
 
-putlog "OMDB v1 Loaded @ 21/06/2020"
+proc imdb:fetch:me {nick uhost hand chan keyword text} {
+imdb:fetch $nick $uhost $hand $chan $text
+}
+
+proc imdb:fetch {nick uhost hand chan text} {
+	global APIkey
+	
+	foreach word [split $text] {
+		if {[matchstr "*http*imdb*title*" $word]} {
+			set movie [lindex [split $word "/"] end]
+			putlog "$movie"
+		}
+	}
+			
+	set data [http::data [http::geturl "http://www.omdbapi.com/?[http::formatQuery apikey $APIkey i $movie]" -timeout 10000]]
+	::http::cleanup $data
+			
+	set datadict [::json::json2dict $data]
+	set Response [dict get $datadict "Response"]
+	if {$Response eq "False"} {
+		set Error [dict get $datadict "Error"]
+		putserv "PRIVMSG $chan :$Error"
+		return 0
+	}
+			
+	set Title [dict get $datadict "Title"]
+	set Released  [dict get $datadict "Released"]
+	set Runtime [dict get $datadict "Runtime"]
+	set Plot [dict get $datadict "Plot"]
+	set imdbRating [dict get $datadict "imdbRating"]
+		
+	putserv "PRIVMSG $chan :\002Title:\002 $Title | \002Released:\002 $Released | \002Duration:\002 $Runtime | \002Plot:\002 $Plot| \002Rating:\002 $imdbRating of 10"
+		
+	return 0
+}
+
+putlog "OMDB v2 Loaded @ 22/06/2020"
