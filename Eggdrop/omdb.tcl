@@ -31,6 +31,10 @@
 # - Added channel flags to enable/disable the script on a per channel basis
 # - Added user flags to limit those that can enable/disable the script
 ##########
+# v3a
+# - Fixed the script triggering in any action message even if there was
+#   no URL in text provided by the user (found by juanonymous)
+##########
 
 ##########
 # Configuration
@@ -205,6 +209,10 @@ proc omdb:fetch {nick uhost hand chan text} {
 		return 0
 	}
 	
+	if {![matchstr "*imdb.com/title/*" $text]} {
+		return 0
+	}
+	
 	# Lets grab the URL from the input provided by the user
 	set url [lsearch -inline $text *imdb.com/title/*]
 	
@@ -242,4 +250,4 @@ proc omdb:fetch {nick uhost hand chan text} {
 	return 0
 }
 
-putlog "OMDB v3 Loaded @ 23/06/2020"
+putlog "OMDB v3a Loaded @ 24/06/2020"
