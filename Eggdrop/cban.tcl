@@ -96,7 +96,7 @@ namespace eval cban {
 		}
 
 		if {$target eq ""} {
-			putserv "PRIVMSG $chan :ERROR! Syntax: [::cban::getBanTriga]cban <nick> <duration"
+			putserv "PRIVMSG $chan :ERROR! Syntax: [::cban::getBanTriga]cban <nick>"
 			return 0
 		}
 
@@ -205,7 +205,7 @@ namespace eval cban {
 		}
 
 		if {$target eq ""} {
-			putserv "PRIVMSG $chan :ERROR! Syntax: [::cban::getBanTriga]cban <nick> <duration"
+			putserv "PRIVMSG $chan :ERROR! Syntax: [::cban::getBanTriga]cban <nick>"
 			return 0
 		}
 
