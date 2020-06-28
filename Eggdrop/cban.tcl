@@ -26,8 +26,7 @@
 # -= v2 =-
 # - Converted the script into a namespace
 # - Added temporary ban command, default ban reason and ban duration (for temp ban)
-##########
-# 28/06/2020
+#
 # -= v2.1 =-
 # - Added some bot protections
 ##########
