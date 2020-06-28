@@ -18,12 +18,18 @@
 ##########
 # Changelog
 ##########
-# 20/06/2020 - v1
+# 20/06/2020
+# -= v1 =-
 # - Initial release
 ##########
-# 28/06/2020 - v2
+# 28/06/2020
+# -= v2 =-
 # - Converted the script into a namespace
 # - Added temporary ban command, default ban reason and ban duration (for temp ban)
+##########
+# 28/06/2020
+# -= v2.1 =-
+# - Added some bot protections
 ##########
 
 ##########
@@ -55,6 +61,9 @@ namespace eval cban {
 
 	# How many minutes for the temp ban
 	variable banDuration "2"
+	
+	# Revenge kick when someone tries to ban the bot
+	variable revengeKick "\002Revenge Kick:\002 You wish! Next time, try to ban \002\00304yourself\003\002!" 
 
 	##########
 	# END OF CONFIGURATION
@@ -78,7 +87,8 @@ namespace eval cban {
 	bind pub - ${banstriga}bans ::cban::chan:bans
 
 	proc cban:pub {nick uhost hand chan text} {
-		variable botnick lastBan banReason
+		global botnick
+		variable lastBan
 
 		variable target "[lindex [split $text] 0]"
 		variable banmask "[maskhost [getchanhost $target $chan] 1]"
@@ -99,6 +109,11 @@ namespace eval cban {
 			putserv "PRIVMSG $chan :ERROR! Syntax: [::cban::getBanTriga]cban <nick>"
 			return 0
 		}
+		
+		if {$target eq "$botnick"} {
+			putkick $chan $nick $::cban::revengeKick
+			return 0
+		}
 
 		if {![onchan $target $chan]} {
 			putserv "PRIVMSG $chan :ERROR! $target needs to be in the channel."
@@ -114,7 +129,8 @@ namespace eval cban {
 	}
 
 	proc uncban:pub {nick uhost hand chan text} {
-		variable botnick lastBan banReason
+		global botnick
+		variable lastBan
 
 		set unbanmask "[lindex [split $text] 0]"
 
@@ -153,9 +169,13 @@ namespace eval cban {
 	}
 
 	proc addban:pub {nick uhost hand chan text} {
-		variable botnick lastBan banReason
+		global botnick
+		variable lastBan
 
 		variable banmask [lindex [split $text] 0]
+		
+		variable botAddr "${botnick}![maskhost [getchanhost $botnick $chan] 5]"
+		
 
 		if {![isidentified $nick]} {
 			putserv "PRIVMSG $chan :ERROR! $nick, you need to be identified to use this command."
@@ -178,6 +198,11 @@ namespace eval cban {
 			putserv "PRIVMSG $chan :ERROR! That mask is too broad and therefore is denied"
 			return 0
 		}
+		
+		if {[matchaddr $banmask $::cban::botAddr]} {
+			putkick $chan $nick $::cban::revengeKick
+			return 0
+		}
 
 		variable lastBan "$banmask"
 		newchanban "$chan" "$banmask" "$nick" "$::cban::banreason" 0
@@ -186,7 +211,8 @@ namespace eval cban {
 	}
 
 	proc tban:pub {nick uhost hand chan text} {
-		variable botnick banDuration banReason lastBan
+		global botnick
+		variable lastBan
 
 		variable target "[lindex [split $text] 0]"
 
@@ -208,6 +234,11 @@ namespace eval cban {
 			putserv "PRIVMSG $chan :ERROR! Syntax: [::cban::getBanTriga]cban <nick>"
 			return 0
 		}
+		
+		if {$target eq "$botnick"} {
+			putkick $chan $nick $::cban::revengeKick
+			return 0
+		}
 
 		if {![onchan $target $chan]} {
 			putserv "PRIVMSG $chan :ERROR! $target needs to be in the channel."
@@ -224,7 +255,7 @@ namespace eval cban {
 
 
 	proc chan:bans {nick uhost hand chan text} {
-		variable botnick
+		global botnick
 
 		if {![isidentified $nick]} {
 			putserv "PRIVMSG $chan :ERROR! $nick, you need to be identified to use this command."
@@ -248,5 +279,5 @@ namespace eval cban {
 		return 0
 	}
 
-	putlog "CBan v2 @ 28/06/2020 - Loaded"
+	putlog "CBan v2.1 @ 28/06/2020 - Loaded"
 };
