@@ -26,7 +26,8 @@
 # -= v2 =-
 # - Converted the script into a namespace
 # - Added temporary ban command, default ban reason and ban duration (for temp ban)
-#
+##########
+# 28/06/2020
 # -= v2.1 =-
 # - Added some bot protections
 ##########
@@ -61,8 +62,9 @@ namespace eval cban {
 	# How many minutes for the temp ban
 	variable banDuration "2"
 	
-	# Revenge kick when someone tries to ban the bot
-	variable revengeKick "\002Revenge Kick:\002 You wish! Next time, try to ban \002\00304yourself\003\002!" 
+	# Revenge kick when someone tries to ban the bot (%nick% will be replaced by the nick of
+	# the person that tried to ban the bot
+	variable revengeKick "\002Revenge Kick:\002 You wish %nick%! Next time, try to ban \002\00304yourself\003\002!" 
 
 	##########
 	# END OF CONFIGURATION
@@ -109,8 +111,8 @@ namespace eval cban {
 			return 0
 		}
 		
-		if {$target eq "$botnick"} {
-			putkick $chan $nick $::cban::revengeKick
+		if {[matchstr $target $botnick]} {
+			putkick $chan $nick [regsub -all {%nick%} $::cban::revengeKick $nick]
 			return 0
 		}
 
@@ -172,7 +174,6 @@ namespace eval cban {
 		variable lastBan
 
 		variable banmask [lindex [split $text] 0]
-		
 		variable botAddr "${botnick}![maskhost [getchanhost $botnick $chan] 5]"
 		
 
@@ -198,12 +199,13 @@ namespace eval cban {
 			return 0
 		}
 		
-		if {[matchaddr $banmask $::cban::botAddr]} {
-			putkick $chan $nick $::cban::revengeKick
+		if {[matchstr $banmask $::cban::botAddr]} {
+			putkick $chan $nick [regsub -all {%nick%} $::cban::revengeKick $nick]
 			return 0
 		}
 
 		variable lastBan "$banmask"
+		
 		newchanban "$chan" "$banmask" "$nick" "$::cban::banreason" 0
 		pushmode $chan +b $banmask
 		putserv "PRIVMSG $chan :$banmask added to the ban list for $chan"
@@ -234,8 +236,8 @@ namespace eval cban {
 			return 0
 		}
 		
-		if {$target eq "$botnick"} {
-			putkick $chan $nick $::cban::revengeKick
+		if {[matchstr $target $botnick]} {
+			putkick $chan $nick [regsub -all {%nick%} $::cban::revengeKick $nick]
 			return 0
 		}
 
