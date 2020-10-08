@@ -220,13 +220,13 @@ proc omdb:fetch {nick uhost hand chan text} {
 	set movieID [lindex [split $url "/"] end]
 	
 	# NOTE: IMDb ID's aren't supposed to be longer than 9 chars, so lets lock it to only 9 chars
-	set imdbID [string range "$movieID" 0 8]
+	set IMDbID [string range "$movieID" 0 8]
 	
-	# We have the title, locked down to 9 chars, as OMDb expects. But this isn't fail proof!!!
+	# We have the ID, locked down to 9 chars, as OMDb expects. But this isn't fail proof!!!
 	# If the user "tampers" the title, you'll waste on API call for nothing!
 	# Nonethelss, let's proceed, because we have access to 1,000 daily API calls
 			
-	set data [http::data [http::geturl "http://www.omdbapi.com/?[http::formatQuery apikey $APIkey i $imdbID]" -timeout 10000]]
+	set data [http::data [http::geturl "http://www.omdbapi.com/?[http::formatQuery apikey $APIkey i $IMDbID]" -timeout 10000]]
 	::http::cleanup $data
 			
 	set datadict [::json::json2dict $data]
