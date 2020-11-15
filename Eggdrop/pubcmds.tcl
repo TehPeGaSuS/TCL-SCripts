@@ -251,7 +251,7 @@ namespace eval pubcmd {
 			chattr $tgtaccount |+$vflags $chan
 			putserv [format "PRIVMSG %s :%s added to %s VOICE list" $chan $tgtaccount $chan]
 			if {!([isvoice $target $chan] || [isop $target $chan])} {
-				pushmode $chan +$vflags $nick
+				pushmode $chan +$vflags $target
 				flushmode $chan
 			} elseif {[isop $target $chan]} {
 				pushmode $chan -$oflags $target
