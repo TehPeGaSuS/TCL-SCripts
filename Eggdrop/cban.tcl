@@ -64,7 +64,7 @@ namespace eval cban {
 	
 	# Revenge kick when someone tries to ban the bot (%nick% will be replaced by the nick of
 	# the person that tried to ban the bot
-	variable revengeKick "\002Revenge Kick:\002 You wish %nick%! Next time, try to ban \002\00304yourself\003\002!" 
+	variable revengeKick "\002Revenge Kick:\002 You wish %s! Next time, try to ban \002\00304yourself\003\002!" 
 
 	##########
 	# END OF CONFIGURATION
@@ -89,7 +89,7 @@ namespace eval cban {
 
 	proc cban:pub {nick uhost hand chan text} {
 		global botnick
-		variable lastBan
+		variable lastBan; variable revengeKick
 
 		variable target "[lindex [split $text] 0]"
 		variable banmask "[maskhost [getchanhost $target $chan] 1]"
@@ -112,7 +112,7 @@ namespace eval cban {
 		}
 		
 		if {[matchstr $target $botnick]} {
-			putkick $chan $nick [regsub -all {%nick%} $::cban::revengeKick $nick]
+			putkick $chan $nick [format $revengeKick $nick]
 			return 0
 		}
 
@@ -170,8 +170,8 @@ namespace eval cban {
 	}
 
 	proc addban:pub {nick uhost hand chan text} {
-		global botnick
-		variable lastBan
+		global botnick botname
+		variable lastBan; variable revengeKick
 
 		variable banmask [lindex [split $text] 0]
 		variable botAddr "${botnick}![maskhost [getchanhost $botnick $chan] 5]"
@@ -199,8 +199,8 @@ namespace eval cban {
 			return 0
 		}
 		
-		if {[matchstr $banmask $::cban::botAddr]} {
-			putkick $chan $nick [regsub -all {%nick%} $::cban::revengeKick $nick]
+		if {[matchstr $banmask $botname]} {
+			putkick $chan $nick [format $revengeKick $nick]
 			return 0
 		}
 
@@ -237,7 +237,7 @@ namespace eval cban {
 		}
 		
 		if {[matchstr $target $botnick]} {
-			putkick $chan $nick [regsub -all {%nick%} $::cban::revengeKick $nick]
+			putkick $chan $nick [format $revengeKick $nick]
 			return 0
 		}
 
