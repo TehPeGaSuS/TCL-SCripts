@@ -61,24 +61,34 @@ namespace eval pubcmd {
 	# Binds
 	##########
 	bind pub - [set [namespace current]::trigger]addop [namespace current]::addop:pub
+	bind pub - [set [namespace current]::trigger]delop [namespace current]::delop:pub
 	bind pub - [set [namespace current]::trigger]addvoice [namespace current]::addvoice:pub
+	bind pub - [set [namespace current]::trigger]delvoice [namespace current]::delvoice:pub
 	bind pub - [set [namespace current]::trigger]ban [namespace current]::ban:pub
 	bind pub - [set [namespace current]::trigger]unban [namespace current]::unban:pub
+	bind pub - [set [namespace current]::trigger]tban [namespace current]::tban:pub
 	
 	##########
 	# Procs
 	##########
 	
 	##########
-	# Add OP
+	# Addop
 	##########
 	proc addop:pub {nick uhost hand chan text} {
-		variable trigger; variable oflags; variable vflags; variable nflags
-		
+		variable trigger
+		variable nflags
+		variable oflags
+		variable vflags		
 		variable nsaccount "[getaccount $nick]"
-		set target "[lindex [split $text] 0]"
+		variable target "[lindex [split $text] 0]"
 		variable tgtaccount "[getaccount $target]"
 		variable tgthost "[maskhost ${target}![getchanhost $target $chan] 2]"
+		
+		if {$nsaccount eq ""} {
+			putserv [format "PRIVMSG %s :%s you're not identified/registered" $chan $nick]
+			return 0
+		}
 		
 		if {![matchattr $nsaccount $nflags]} {
 			putserv [format "PRIVMSG %s :%s, you don't have access" $chan $nick]
@@ -91,7 +101,7 @@ namespace eval pubcmd {
 		}
 		
 		if {$tgtaccount eq ""} {
-			putserv [format "PRIVMSG %s :%s isn't a registered nick" $chan $target]
+			putserv [format "PRIVMSG %s :%s isn't a registered or identified nick" $chan $target]
 			return 0
 		}
 		
@@ -101,13 +111,14 @@ namespace eval pubcmd {
 			putserv [format "PRIVMSG %s :%s added to %s OP list" $chan $tgtaccount $chan]
 			if {!([isvoice $target $chan] || [isop $target $chan])} {
 				pushmode $chan +$oflags $target
+				flushmode $chan
 				return 0
 			} elseif {[isvoice $target $chan]} {
 				pushmode $chan +$oflags $target
 				pushmode $chan -$vflags $target
+				flushmode $chan
 				return 0
 			}
-			flushmode $chan
 			return 0
 		}
 		
@@ -123,12 +134,13 @@ namespace eval pubcmd {
 				putserv [format "PRIVMSG %s :%s added to %s OP list" $chan $tgtaccount $chan]
 				if {!([isvoice $target $chan] || [isop $target $chan])} {
 					pushmode $chan +$oflags $target
+					flushmode $chan
 				} elseif {[isvoice $target $chan]} {
 					pushmode $chan +$oflags $target
 					pushmode $chan -$vflags $target
+					flushmode $chan
 					return 0
 				}
-				flushmode $chan
 				return 0
 			}
 			chattr $tgtaccount |+$oflags $chan
@@ -147,15 +159,77 @@ namespace eval pubcmd {
 	}
 	
 	##########
+	# DelOp
+	##########
+	proc delop:pub {nick uhost hand chan text} {
+		variable trigger
+		variable nflags
+		variable oflags
+		variable vflags
+		variable nsaccount "[getaccount $nick]"
+		variable target "[lindex [split $text] 0]"
+		variable tgtaccount "[getaccount $target]"
+		
+		if {$nsaccount eq ""} {
+			putserv [format "PRIVMSG %s :%s you're not identified/registered" $chan $nick]
+			return 0
+		}
+		
+		if {![matchattr $nsaccount $nflags]} {
+			putserv [format "PRIVMSG %s :%s, you don't have access." $chan $nick]
+			return 0
+		}
+		
+		if {$target eq ""} {
+			putserv [format "PRIVMSG %s :ERROR! Syntax: %sdelop <nick>" $chan $trigger]
+			return 0
+		}
+		
+		if {$tgtaccount eq ""} {
+			putserv [format "PRIVMSG %s :%s isn't a registered or identified nick." $chan $target]
+			return 0
+		}
+		
+		if {![validuser $tgtaccount]} {
+			putserv [format "PRIVMSG %s :%s is an unknown user to me." $chan $tgtaccount]
+			return 0
+		}
+		
+		if {[validuser $tgtaccount]} {
+			if {[matchattr $tgtaccount |$vflags $chan]} {
+				putserv [format "PRIVMSG %s :%s is a %s VOICE. Use %sdelvoice %s instead" $chan $target $chan $trigger $target]
+				return 0
+			}
+			
+			if {[matchattr $tgtaccount |$oflags $chan]} {
+				chattr $tgtaccount |-$oflags $chan
+				putserv [format "PRIVMSG %s :%s removed from %s OP list" $chan $target $chan]
+				if {[isop $target $chan]} {
+					pushmode $chan -$oflags $target
+					flushmode $chan
+					return 0
+				}
+			}
+		}
+	}
+	
+	##########
 	# Add Voice
 	##########
 	proc addvoice:pub {nick uhost hand chan text} {
-		variable trigger; variable vflags; variable oflags; variable nflags
-		
+		variable trigger
+		variable nflags
+		variable oflags
+		variable vflags
 		variable nsaccount "[getaccount $nick]"
-		set target "[lindex [split $text] 0]"
+		variable target "[lindex [split $text] 0]"
 		variable tgtaccount "[getaccount $target]"
 		variable tgthost "[maskhost ${target}![getchanhost $target $chan] 2]"
+		
+		if {$nsaccount eq ""} {
+			putserv [format "PRIVMSG %s :%s you're not identified/registered" $chan $nick]
+			return 0
+		}
 		
 		if {![matchattr $nsaccount $nflags]} {
 			putserv [format "PRIVMSG %s :%s, you don't have access." $chan $nick]
@@ -168,7 +242,7 @@ namespace eval pubcmd {
 		}
 		
 		if {$tgtaccount eq ""} {
-			putserv [format "PRIVMSG %s :%s isn't a registered nick." $chan $target]
+			putserv [format "PRIVMSG %s :%s isn't a registered or identified nick." $chan $target]
 			return 0
 		}
 		
@@ -178,11 +252,12 @@ namespace eval pubcmd {
 			putserv [format "PRIVMSG %s :%s added to %s VOICE list" $chan $tgtaccount $chan]
 			if {!([isvoice $target $chan] || [isop $target $chan])} {
 				pushmode $chan +$vflags $nick
+				flushmode $chan
 			} elseif {[isop $target $chan]} {
 				pushmode $chan -$oflags $target
 				pushmode $chan +$vflags $target
+				flushmode $chan
 			}
-			flushmode $chan
 			return 0
 		}
 		
@@ -198,16 +273,82 @@ namespace eval pubcmd {
 				putserv [format "PRIVMSG %s :%s added to %s VOICE list" $chan $tgtaccount $chan]
 				if {!([isvoice $target $chan] || [isop $target $chan])} {
 					pushmode $chan +$vflags $target
+					flushmode $chan
 					return 0
 				} elseif {[isop $target $chan]} {
 					pushmode $chan -$oflags $target
 					pushmode $chan +$vflags $target
+					flushmode $chan
 					return 0
 				}
+				return 0
+			}
+			chattr $tgtaccount |+$vflags $chan
+			putserv [format "PRIVMSG %s :%s added to %s VOICE list" $chan $tgtaccount $chan]
+			if {!([isvoice $target $chan] || [isop $target $chan])} {
+				pushmode $chan +$vflags $target
+				flushmode $chan
+				return 0
+			} elseif {[isop $target $chan]} {
+				pushmode $chan -$oflags $target
+				pushmode $chan +$vflags $target
 				flushmode $chan
 				return 0
 			}
+		}
+	}
+	
+	##########
+	# Delvoice
+	##########
+	proc delvoice:pub {nick uhost hand chan text} {
+		variable trigger
+		variable nflags
+		variable oflags
+		variable vflags
+		variable nsaccount "[getaccount $nick]"
+		variable target "[lindex [split $text] 0]"
+		variable tgtaccount "[getaccount $target]"
+		
+		if {$nsaccount eq ""} {
+			putserv [format "PRIVMSG %s :%s you're not identified/registered" $chan $nick]
 			return 0
+		}
+		
+		if {![matchattr $nsaccount $nflags]} {
+			putserv [format "PRIVMSG %s :%s, you don't have access" $chan $nick]
+			return 0
+		}
+		
+		if {$target eq ""} {
+			putserv [format "PRIVMSG %s :ERROR! Syntax: %sdelvoice <nick>" $chan $trigger]
+			return 0
+		}
+		
+		if {$tgtaccount eq ""} {
+			putserv [format "PRIVMSG %s :%s isn't a registered or identified nick." $chan $target]
+			return 0
+		}
+		
+		if {![validuser $tgtaccount]} {
+			putserv [format "PRIVMSG %s :%s is an unknown user to me" $chan $target]
+			return 0
+		}
+		
+		if {[validuser $tgtaccount]} {
+			if {[matchattr $tgtaccount |$oflags $chan]} {
+				putserv [format "PRIVMSG %s :%s is a %s OP. Use %sdelop %s instead" $chan $target $chan $trigger $target]
+				return 0
+			}
+			if {[matchattr $tgtaccount |$vflags $chan]} {
+				chattr $tgtaccount |-$vflags $chan
+				if {[isvoice $target $chan]} {
+					pushmode $chan -$vflags $target
+					flushmode $chan
+					putserv [format "PRIVMSG %s :%s removed from %s VOICE list" $chan $target $chan]
+					return 0
+				}
+			}
 		}
 	}
 };
