@@ -1,7 +1,8 @@
 #####
-# Nickname/Uhost tracker script (SimosNap)
+# Nickname/Uhost tracker script
 # Egghelp version, donations to slennox are welcomed. :P
-# Minor tweaks by PeGaSuS
+# Original version from speechles (?)
+# Enchanced by PeGaSuS
 #####
 
 #####
@@ -21,12 +22,12 @@ set dupes 0
 # Map channels to send the message to a backchan
 ##########
 set channelmap {
-	"#channel" "#back_channel"
-	"#channel2" "#channel2-staff"
-	"#channel3" "#channel3-ops"
+	"#amicizia" "#camelot"
+	"#lolchat" "#lolstaff"
+	"#allnitecafe" "#allnitecafe-ops"
 }
 
-set alertnicks "me you others"
+set alertnicks "PeGaSuS"
 
 ##########
 # Binds
