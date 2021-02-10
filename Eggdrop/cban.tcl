@@ -92,9 +92,10 @@ namespace eval cban {
 		global botnick
 		variable lastBan
 		variable revengeKick
-
+		
+		variable bantype "[channel get $chan ban-type]"
 		variable target "[lindex [split $text] 0]"
-		variable banmask "[maskhost [getchanhost $target $chan] 1]"
+		variable banmask "[maskhost ${target}![getchanhost $target $chan] $bantype]"
 
 		if {![isidentified $nick]} {
 			putserv "PRIVMSG $chan :ERROR! $nick, you need to be identified to use this command."
@@ -215,10 +216,10 @@ namespace eval cban {
 	proc tban:pub {nick uhost hand chan text} {
 		global botnick
 		variable lastBan
-
+		
+		variable bantype "[channel get $chan ban-type]"
 		variable target "[lindex [split $text] 0]"
-
-		variable banmask "[maskhost [getchanhost $target $chan] 1]"
+		variable banmask "[maskhost ${target}![getchanhost $target $chan] $bantype]"
 
 		if {![isidentified $nick]} {
 			putserv "PRIVMSG $chan :ERROR! $nick, you need to be identified to use this command."
@@ -281,5 +282,5 @@ namespace eval cban {
 		return 0
 	}
 
-	putlog "CBan v2.2 @ 10/02/2021 - Loaded"
+	putlog "CBan v2.1 @ 28/06/2020 - Loaded"
 };
