@@ -288,5 +288,5 @@ namespace eval cban {
 		return 0
 	}
 
-	putlog "CBan v2.1 @ 28/06/2020 - Loaded"
+	putlog "CBan v2.2 @ 10/02/2021 - Loaded"
 };
