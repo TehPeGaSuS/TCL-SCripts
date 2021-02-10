@@ -21,12 +21,12 @@ set dupes 0
 # Map channels to send the message to a backchan
 ##########
 set channelmap {
-	"#channel1" "#back_channel1"
-	"#channel2" "#back_channel2"
-	"#back_channel3" "#back_channel3"
+	"#amicizia" "#camelot"
+	"#lolchat" "#lolstaff"
+	"#allnitecafe" "#allnitecafe-ops"
 }
 
-set alertnicks "me you others"
+set alertnicks "PeGaSuS"
 
 ##########
 # Binds
@@ -118,27 +118,27 @@ proc join_onjoin {nick uhost hand chan} {
 				set bkc [dict get $channelmap $ch]
 				if {[regexp c [getchanmode $bkc]]} {
 					foreach line [split_list $nlist 150] {
-						putserv "PRIVMSG $bkc :\[$chan\] $nick ha usato: [join $line " , "]"
+						putserv "PRIVMSG $bkc :\[$chan\] $nick ha usato: [join $line " "]"
 					}
 				} else {
 					foreach line [split_list $nlist 150] {
-						putserv "PRIVMSG $bkc :\00302\[$chan\]\003 \002$nick\002 ha usato: \00304[join $line " , "]"
+						putserv "PRIVMSG $bkc :\00302\[$chan\]\003 \002\00303$nick\003\002 ha usato: \00304[join $line " "]"
 					}
 				}
 			} else {
 				if {[isop $botnick $chan]} {
 					if {[regexp c [getchanmode $ch]]} {
 						foreach line [split_list $nlist 150] {
-							putserv "NOTICE @$ch :$nick ha usato: [join $line " , "]"
+							putserv "NOTICE @$ch :$nick ha usato: [join $line " "]"
 						}
 					} else {
 						foreach line [split_list $nlist 150] {
-							putserv "NOTICE @$ch :\002$nick\002 ha usato: \00304[join $line " , "]"
+							putserv "NOTICE @$ch :\002\00303$nick\003\002 ha usato: \00304[join $line " "]"
 						}
 					}
 				} else {
 					foreach n [split alertnicks] {
-						putserv "PRIVMSG $n :\00302\[$chan\]\003 \002$nick\002 ha usato: \00304[join $line " , "]"
+						putserv "PRIVMSG $n :\00302\[$chan\]\003 \002\00303$nick\003\002 ha usato: \00304[join $line " "]"
 					}
 				}
 			}
