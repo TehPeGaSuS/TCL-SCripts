@@ -21,12 +21,12 @@ set dupes 0
 # Map channels to send the message to a backchan
 ##########
 set channelmap {
-	"#amicizia" "#camelot"
-	"#lolchat" "#lolstaff"
-	"#allnitecafe" "#allnitecafe-ops"
+	"#channel" "#back_channel"
+	"#channel2" "#channel2-staff"
+	"#channel3" "#channel3-ops"
 }
 
-set alertnicks "PeGaSuS"
+set alertnicks "me you others"
 
 ##########
 # Binds
@@ -138,7 +138,9 @@ proc join_onjoin {nick uhost hand chan} {
 					}
 				} else {
 					foreach n [split alertnicks] {
-						putserv "PRIVMSG $n :\00302\[$chan\]\003 \002\00303$nick\003\002 ha usato: \00304[join $line " "]"
+						foreach line [split_list $nlist 150] {
+							putserv "PRIVMSG $n :\00302\[$chan\]\003 \002\00303$nick\003\002 ha usato: \00304[join $line " "]"
+						}
 					}
 				}
 			}
