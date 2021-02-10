@@ -44,6 +44,9 @@
 ##########
 # COMMANDS
 ##########
+# - NOTE: the #chan variable is always optional and if not specified defaults to the channel
+# - where the command is being issued
+#
 # - cban [#chan] <nick> - bans the nick in the format *!*user@host (nick needs to be in the channel)
 #
 # - uncban [#chan] <mask> - Removes the specified mask
