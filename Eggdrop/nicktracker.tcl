@@ -22,12 +22,12 @@ set dupes 0
 # Map channels to send the message to a backchan
 ##########
 set channelmap {
-	"#amicizia" "#camelot"
-	"#lolchat" "#lolstaff"
-	"#allnitecafe" "#allnitecafe-ops"
+	"#channel" "#back_channel"
+	"#channel2" "#channel2-staff"
+	"#channel3" "#channel3-ops"
 }
 
-set alertnicks "PeGaSuS"
+set alertnicks "me you others"
 
 ##########
 # Binds
