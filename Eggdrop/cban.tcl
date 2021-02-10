@@ -31,6 +31,12 @@
 # -= v2.1 =-
 # - Added some bot protections
 ##########
+# 10/02/2021
+# -=v2.2=-
+# - Removed unused vars
+# - Code cleanup
+# - Syntax fixing
+##########
 
 ##########
 # COMMANDS
