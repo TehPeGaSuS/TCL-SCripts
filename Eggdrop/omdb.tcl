@@ -70,7 +70,7 @@ setudef flag omdb
 ##########
 # Channel flag for automatic fetching of information when a URL is pasted
 ##########
-setudef flag automdb
+setudef flag omdbauto
 
 ##########
 # The following packages are required to this script to work
@@ -139,20 +139,20 @@ proc omdbenable:pub {nick uhost hand chan text} {
 		}
 	} elseif {[matchstr "auto" $command]} {
 		if {[matchstr "on" $autopt]} {
-			if {[channel get $chan automdb]} {
+			if {[channel get $chan omdbauto]} {
 				putserv "PRIVMSG $chan :ERROR! Auto OMDb is already enabled on $chan"
 				return 0
 			} else {
-				channel set $chan +automdb
+				channel set $chan +omdbauto
 				putserv "PRIVMSG $chan :Auto OMDb enabled on $chan"
 				return 0
 			}
 		} elseif {[matchstr "off" $autopt]} {
-			if {![channel get $chan automdb]} {
+			if {![channel get $chan omdbauto]} {
 				putserv "PRIVMSG $chan :ERROR! Auto OMDb is already disabled on $chan"
 				return 0
 			} else {
-				channel set $chan -automdb
+				channel set $chan -omdbauto
 				putserv "PRIVMSG $chan :Auto OMDb enabled successfully on $chan"
 				return 0
 			}
@@ -195,7 +195,7 @@ proc omdb:pub {nick uhost hand chan text} {
 }
 
 proc omdb:fetch:me {nick uhost hand chan keyword text} {
-	if {![channel get $chan automdb]} {
+	if {![channel get $chan omdbauto]} {
 		return 0
 	}
 	
@@ -205,7 +205,7 @@ proc omdb:fetch:me {nick uhost hand chan keyword text} {
 proc omdb:fetch {nick uhost hand chan text} {
 	global APIkey
 	
-	if {![channel get $chan automdb]} {
+	if {![channel get $chan omdbauto]} {
 		return 0
 	}
 	
