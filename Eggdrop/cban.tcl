@@ -75,6 +75,7 @@ namespace eval cban {
 	###############
 	# If you touch the code below and then complain the script "suddenly stopped working" I'll touch you at night. (THANKS thommey)
 	###############
+	variable lastBan ""
 
 	proc getBanTriga {} {
 		variable ::cban::banstriga
@@ -89,7 +90,8 @@ namespace eval cban {
 
 	proc cban:pub {nick uhost hand chan text} {
 		global botnick
-		variable lastBan; variable revengeKick
+		variable lastBan
+		variable revengeKick
 
 		variable target "[lindex [split $text] 0]"
 		variable banmask "[maskhost [getchanhost $target $chan] 1]"
@@ -171,10 +173,9 @@ namespace eval cban {
 
 	proc addban:pub {nick uhost hand chan text} {
 		global botnick botname
-		variable lastBan; variable revengeKick
-
+		variable lastBan
+		variable revengeKick
 		variable banmask [lindex [split $text] 0]
-		variable botAddr "${botnick}![maskhost [getchanhost $botnick $chan] 5]"
 		
 
 		if {![isidentified $nick]} {
@@ -280,5 +281,5 @@ namespace eval cban {
 		return 0
 	}
 
-	putlog "CBan v2.1 @ 28/06/2020 - Loaded"
+	putlog "CBan v2.2 @ 10/02/2021 - Loaded"
 };
