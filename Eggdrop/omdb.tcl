@@ -250,4 +250,4 @@ proc omdb:fetch {nick uhost hand chan text} {
 	return 0
 }
 
-putlog "OMDB v3a Loaded @ 24/06/2020"
+putlog "OMDB v3a Loaded @ 24/06/2020 by PeGaSuS"
