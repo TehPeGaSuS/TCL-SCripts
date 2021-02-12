@@ -53,7 +53,8 @@
 #
 # - bans [#chan] - Sends a PM to the user showing the current internal ban list for the channel
 #
-# - addban [#chan] <mask> - Adds the specified mask to the bot ban list (this doesn't do any sanity checks, so you can end up banning everyone)
+# - addban [#chan] <mask> - Adds the specified mask to the bot ban list (this doesn't do any sanity checks,
+#   so you can end up banning everyone)
 #
 # - tban [#chan] <nick> - Adds a temporary ban in the specified nick (nick must be on channel) with the duration
 #   specified on banDuration variable
