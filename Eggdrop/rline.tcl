@@ -4,6 +4,7 @@
 # This script reads a random line from a file
 # and displays it on the channel when triggered
 # by the public command specified
+# Enjoy!
 ##########
 
 ##########
