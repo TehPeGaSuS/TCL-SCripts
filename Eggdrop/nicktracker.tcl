@@ -27,6 +27,8 @@ set channelmap {
 	"#channel3" "#channel3-ops"
 }
 
+# Nicks to alert in case the channel doesn't have a backchan or there's no
+# channel -> backchan mapping
 set alertnicks "me you others"
 
 ##########
