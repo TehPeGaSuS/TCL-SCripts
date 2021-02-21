@@ -700,7 +700,7 @@ namespace eval cban {
 	
 	# uncban
 	proc uncban:msg {nick uhost hand text} {
-		variable chan "[lindex[split $text] 0]"
+		variable chan "[lindex [split $text] 0]"
 		variable unbanmask "[lindex [split $text] 1]"
 		
 		if {![isidentified $nick]} {
@@ -708,7 +708,7 @@ namespace eval cban {
 			return 0
 		}
 		
-		if {![mtachstr "#*" $chan]} {
+		if {![matchstr "#*" $chan]} {
 			putserv "PRIVMSG $nick :ERROR! Syntax: uncban <#chan> <banmask>"
 			return 0
 		}
@@ -733,7 +733,7 @@ namespace eval cban {
 			return 0
 		}
 		
-		if {![isban $unbanmask]} {
+		if {![isban $unbanmask $chan]} {
 			putserv "PRIVMSG $nick :ERROR! $unbanmask doesn't exist on my database."
 			return 0
 		}
