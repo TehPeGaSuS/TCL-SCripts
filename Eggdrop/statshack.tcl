@@ -1,101 +1,87 @@
-######################
-# StatsMod Hack v1.0 #
-######################
-# THIS IS NOT WORKING AS EXPECTED! USE AT YOUR OWN RISK! YOU HAVE BEEN WARNED!!!
+##########
+# StatsMod Hack
+##########
+# THIS SCRIPT IS EXPERIMENTAL AND CAN MAKE YOUR EGGDROP'S USER FILE TO GROW HUGELY AND CAUSE BOT LAG!
+# USE AT YOUR OWN RISK! YOU HAVE BEEN WARNED!!!
+##########
 #
 # This script is a way to provide tracking stats by nickname, while that function isn't on the module itself.
 # I've done it to personal use, so don't expect it to be a super script! :D :P
 # It's advisable to edit it to fit your needs
 # In order to use this script you have to do a few changes on your stats.conf. They're the following:
 #
-## set autoadd -1
-## set use-eggdrop-userfile 1
-## set anti-autoadd-flags "mnofvb-|mnofvb-"
-## set anti-stats-flag "b|b"
+#		set autoadd -1
+#		set use-eggdrop-userfile 1
+# 		set anti-autoadd-flags "mnofvb-|mnofvb-"
+#		set anti-stats-flag "b|b"
 #
 # Enjoy!
+##########
 
-### Configuration ###
-# How many minutes between each add user check?
+##########
+# Configuration
+##########
+# How many minutes between check?
+##########
+# For each user in each channel to add them if they don't exist yet
 set checktime "2"
-set hostfixtime "5"
 
-# List of badnicks that shouldn't be added
-set badnicks {ChanServ}
+# For each user on the user file to "fix" their hosts
+set hfixtime "5"
 
-### End of configuration ###
+##########
+# End of configuration
+##########
 
-### Binds ###
-# Adding users to the userfile
-bind cron - "*/$checktime * * * *" addstats
-bind cron - "*/$hostfixtime * * * *" hostfix
+bind cron - "*/$checktime * * * *" check
+bind cron - "*/$hfixtime * * * *" hfix
+bind nick - "*" checknick
 
-# Fixing user hosts (only for non global mno)
+set badnicks {
+	"chanserv"
+	"nickserv"
+}
 
+set services "*!*@services.domain.tld"
 
-# Adding new nicks upon nick change to userfile
-bind nick - "*" addnew
-### End of Binds ###
-
-### Procedures ###
-# Proc off adding nicks
-proc addstats {minute hour day month weekday} {
-	global badnicks botnick
+proc check {minute hour day month weekday} {
+	global botnick botname badnicks services
+	
 	foreach chan [channels] {
-		foreach user [chanlist $chan] {
-			if {![validuser $user]} {
-				set isnick 0
-				foreach check $badnicks {
-					if {![string match -nocase "$check" $user]} {
-						continue
-					}
-					if {[string match -nocase "$check" $user] || [string match -nocase $botnick $user]} {
-						set isnick 1
-						break
-					}
-				}
-				if {!$isnick} {
-					adduser $user ${user}!*@*
+		foreach nick [chanlist $chan] {
+			if {![validuser $nick]} {
+				set uhost [maskhost ${nick}![getchanhost $nick $chan] 0]
+				if {!([matchstr $nick $botnick] || [strlwr $nick] in $badnicks || [matchstr $uhost $services] || [matchstr $uhost $botname])} {
+					adduser $nick ${nick}!*@*
 				}
 			}
-		}
-	}
-}
-
-# Proc off adding new nicks
-proc addnew {nick uhost hand chan newnick} {
-	global badnicks botnick
-	if {![validuser $newnick]} {
-		set isnick 0
-		foreach check $badnicks {
-			if {![string match -nocase "$check" $newnick]} {
-				continue
-			}
-			if {[string match -nocase "$check" $newnick] || [string match -nocase $botnick $newnick]} {
-				set isnick 1
-				break
-			}
-		}
-		if {!$isnick} {
-			adduser $newnick ${newnick}!*@*
-		}
-	}
-}
-
-# Proc of fixing hosts
-proc hostfix {minute hour day month weekday} {
-	foreach fix [userlist] {
-		if {![matchattr [nick2hand $fix] mno]} {
-			setuser $fix HOSTS ${fix}!*@*
 		}
 	}
 	return 0
 }
 
-### End of procedures ###
+proc checknick {nick uhost hand chan newnick} {
+	global botnick botname badnicks services
+	
+	set uhost [maskhost ${newnick}![getchanhost $newnick $chan] 0]
+	
+	if {![validuser $newnick]} {
+		if {!([matchstr $newnick $botnick] || [strlwr $newnick] in $badnicks || [matchstr $uhost $services] || [matchstr $uhost $botname])} {
+			adduser $newnick ${newnick}!*@*
+		}
+	}
+	return 0
+}
 
-putlog "StatsMod Hack 27/07/2019 loaded"
+proc hfix {minute hour day month weekday} {
+	global botnick botname
+	foreach user [userlist] {
+		if {![matchattr [nick2hand $user] mno]} {
+			setuser $user HOSTS ""
+			setuser $user HOSTS "${user}!*@*"
+		}
+	}
+	return 0
+}
 
-#################
-# End of Script #
-#################
+putlog "-= StatsMod Hack v1.1 loaded =-"
