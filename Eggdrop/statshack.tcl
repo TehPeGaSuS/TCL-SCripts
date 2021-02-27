@@ -15,6 +15,8 @@
 # 		set anti-autoadd-flags "mnofvb-|mnofvb-"
 #		set anti-stats-flag "b|b"
 #
+# Be sure that you edit your stats.conf this way before starting the bot.
+#
 # Enjoy!
 ##########
 
