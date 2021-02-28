@@ -13,7 +13,7 @@
 #		set autoadd -1
 #		set use-eggdrop-userfile 1
 # 		set anti-autoadd-flags "-|-"
-#		set anti-stats-flag "b"
+#		set anti-stats-flag "b|k"
 #
 # Be sure that you edit your stats.conf this way before starting the bot.
 #
@@ -31,6 +31,18 @@ set checktime "2"
 # For each user on the user file to "fix" their hosts
 set hfixtime "5"
 
+# List of nicks that we don't want on the stats
+# One per line, enclosed within quotes
+set badnicks {
+	"chanserv"
+	"nickserv"
+}
+
+# We also don't want service bots to be counted
+# Put here your services server address
+set services "*!*@services.domain.tld
+
+
 ##########
 # End of configuration
 ##########
@@ -39,12 +51,7 @@ bind cron - "*/$checktime * * * *" check
 bind cron - "*/$hfixtime * * * *" hfix
 bind nick - "*" checknick
 
-set badnicks {
-	"chanserv"
-	"nickserv"
-}
 
-set services "*!*@services.domain.tld"
 
 proc check {minute hour day month weekday} {
 	global botnick botname badnicks services
