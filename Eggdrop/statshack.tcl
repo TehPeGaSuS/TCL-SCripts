@@ -32,7 +32,7 @@ set checktime "2"
 set hfixtime "5"
 
 # List of nicks that we don't want on the stats
-# One per line, enclosed within quotes
+# One per line, enclosed within quotes and lowercase
 set badnicks {
 	"chanserv"
 	"nickserv"
@@ -40,7 +40,7 @@ set badnicks {
 
 # We also don't want service bots to be counted
 # Put here your services server address
-set services "*!*@services.domain.tld
+set services "*!*@services.domain.tld"
 
 
 ##########
