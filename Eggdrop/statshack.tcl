@@ -86,7 +86,7 @@ proc hfix {minute hour day month weekday} {
 	global botnick botname
 	foreach user [userlist] {
 		if {![matchattr [nick2hand $user] mno]} {
-			setuser $user HOSTS ""
+			setuser $user HOSTS
 			setuser $user HOSTS "${user}!*@*"
 		}
 	}
