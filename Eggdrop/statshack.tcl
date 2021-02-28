@@ -12,8 +12,8 @@
 #
 #		set autoadd -1
 #		set use-eggdrop-userfile 1
-# 		set anti-autoadd-flags "mnofvb-|mnofvb-"
-#		set anti-stats-flag "b|b"
+# 		set anti-autoadd-flags "-|-"
+#		set anti-stats-flag "b"
 #
 # Be sure that you edit your stats.conf this way before starting the bot.
 #
@@ -52,8 +52,8 @@ proc check {minute hour day month weekday} {
 	foreach chan [channels] {
 		foreach nick [chanlist $chan] {
 			if {![validuser $nick]} {
-				set uhost [maskhost ${nick}![getchanhost $nick $chan] 0]
-				if {!([matchstr $nick $botnick] || [strlwr $nick] in $badnicks || [matchstr $uhost $services] || [matchstr $uhost $botname])} {
+				set uhost "*![getchanhost $nick $chan]"
+				if {!([matchstr $botnick $nick] || [strlwr $nick] in $badnicks || [matchstr $services $uhost] || [matchstr $botname $uhost])} {
 					adduser $nick ${nick}!*@*
 				}
 			}
@@ -65,10 +65,10 @@ proc check {minute hour day month weekday} {
 proc checknick {nick uhost hand chan newnick} {
 	global botnick botname badnicks services
 	
-	set uhost [maskhost ${newnick}![getchanhost $newnick $chan] 0]
+	set uhost "*![getchanhost $newnick $chan]"
 	
 	if {![validuser $newnick]} {
-		if {!([matchstr $newnick $botnick] || [strlwr $newnick] in $badnicks || [matchstr $uhost $services] || [matchstr $uhost $botname])} {
+		if {!([matchstr $botnick $newnick] || [strlwr $newnick] in $badnicks || [matchstr $services $uhost] || [matchstr $botname $uhost])} {
 			adduser $newnick ${newnick}!*@*
 		}
 	}
