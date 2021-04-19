@@ -151,7 +151,7 @@ proc join_onjoin {nick uhost hand chan} {
 						}
 					}
 				} else {
-					foreach n [split alertnicks] {
+					foreach n [split $alertnicks] {
 						foreach line [split_list $final 150] {
 							putserv "PRIVMSG $n :\00302\[$chan\]\003 \002\00303$nick\003\002 ha usato: \00304[join $line " "]"
 						}
