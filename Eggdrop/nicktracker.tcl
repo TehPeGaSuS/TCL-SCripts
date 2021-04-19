@@ -19,6 +19,11 @@ package require Tcl 8.5
 set dupes 0
 
 ##########
+# How many nicks to show? (0 = all nicks)
+##########
+set list_length "15"
+
+##########
 # Map channels to send the message to a backchan
 ##########
 set channelmap {
@@ -83,7 +88,7 @@ proc nick_nickchange {nick uhost hand chan newnick} {
 # check for joins
 ##########
 proc join_onjoin {nick uhost hand chan} {
-	global botnick dupes channelmap
+	global botnick dupes channelmap list_length
 	if {![channel get $chan "nicktrack"]} {  return 0  }
 
 	# keep everything lowercase for simplicity.
@@ -114,41 +119,47 @@ proc join_onjoin {nick uhost hand chan} {
 		set nlist [split $nicks ","]
 		if {[set pos [lsearch -nocase $nlist $nick]] != -1} { set nlist [lreplace $nlist $pos $pos] }
 
+		if {$list_length eq "0"} {
+			set final "$nlist"
+		} else {
+			set final [lrange $nlist 0 [expr {$list_length - 1}]]
+		}
+
 		# MAKE SURE TO READ THE COMMENTS BELOW
 
-		if {[string length [join $nlist]]} {
+		if {[string length [join $final]]} {
 			if {$ch in [dict keys $channelmap]} {
 				set bkc [dict get $channelmap $ch]
 				if {[regexp c [getchanmode $bkc]]} {
-					foreach line [split_list $nlist 150] {
+					foreach line [split_list $final 150] {
 						putserv "PRIVMSG $bkc :\[$chan\] $nick ha usato: [join $line " "]"
 					}
 				} else {
-					foreach line [split_list $nlist 150] {
+					foreach line [split_list $final 150] {
 						putserv "PRIVMSG $bkc :\00302\[$chan\]\003 \002\00303$nick\003\002 ha usato: \00304[join $line " "]"
 					}
 				}
 			} else {
 				if {[isop $botnick $chan]} {
 					if {[regexp c [getchanmode $ch]]} {
-						foreach line [split_list $nlist 150] {
+						foreach line [split_list $final 150] {
 							putserv "NOTICE @$ch :$nick ha usato: [join $line " "]"
 						}
 					} else {
-						foreach line [split_list $nlist 150] {
+						foreach line [split_list $final 150] {
 							putserv "NOTICE @$ch :\002\00303$nick\003\002 ha usato: \00304[join $line " "]"
 						}
 					}
 				} else {
 					foreach n [split alertnicks] {
-						foreach line [split_list $nlist 150] {
+						foreach line [split_list $final 150] {
 							putserv "PRIVMSG $n :\00302\[$chan\]\003 \002\00303$nick\003\002 ha usato: \00304[join $line " "]"
 						}
 					}
 				}
 			}
 		}
-		
+
 		set known [lsearch -exact -nocase [split $nicks ","] $nick]
 		if {($known != -1) && ($dupes < 1)} {
 			# if the nick is known return
