@@ -119,7 +119,7 @@ proc join_onjoin {nick uhost hand chan} {
 		set nlist [split $nicks ","]
 		if {[set pos [lsearch -nocase $nlist $nick]] != -1} { set nlist [lreplace $nlist $pos $pos] }
 
-		if {$list_length eq "0"} {
+		if {$list_length == 0} {
 			set final "$nlist"
 		} else {
 			set final [lrange $nlist 0 [expr {$list_length - 1}]]
@@ -166,7 +166,7 @@ proc join_onjoin {nick uhost hand chan} {
 			return
 		} else {
 			# otherwise add the nick to the nicks for that host
-			set text [lreplace $text $found $found "$nicks,$nick<$uhost"]
+			set text [lreplace $text $found $found "$nick,$nicks<$uhost"]
 		}
 		# now lets write the new list to the file
 		set file [open $filename "w"]
