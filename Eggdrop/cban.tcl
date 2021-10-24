@@ -112,7 +112,7 @@ namespace eval cban {
 	
 	# Revenge kick reason when someone tries to kick the bot (%s will be replaced by the nick that
 	# tried to kick the bot)
-	variable revengeKick "\002\00304Revenge Kick#\\003\002 You wish %s! Next time, try to kick \00305yourself\003!"
+	variable revengeKick "\002\00304Revenge Kick#\003\002 You wish %s! Next time, try to kick \00305yourself\003!"
 
 	##########
 	# END OF CONFIGURATION
