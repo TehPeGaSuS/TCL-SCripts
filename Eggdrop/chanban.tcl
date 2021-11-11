@@ -81,7 +81,7 @@ proc ban:list {nick uhost hand text} {
 		return
 	}
 	
-	if {[matchattr [nick2hand $nick] $banglobflags|$banchanflags $chan]} {
+	if {![matchattr [nick2hand $nick] $banglobflags|$banchanflags $chan]} {
 		putquick "PRIVMSG $nick :\037ERROR!\037 You don't have access"
 		return
 	}
@@ -228,66 +228,6 @@ proc unbanint:msg {nick uhost hand text} {
 	
 	killchanban $chan $unbanmask
 	putquick "PRIVMSG $nick :Successfully Deleted Ban: $unbanmask for $chan"
-	return 0
-}
-
-bind pub - ${banstriga}gban gban:pub
-proc gban:pub {nick uhost hand chan text} {
-	global banglobflags banreason banreason cbantype
-	
-	if {![matchattr [nick2hand $nick] $banglobflags]} {
-		return
-	}
-	
-	set target [lindex [split $text] 0]
-	
-	if {[onchan $target $chan]} {
-		set banmask "[maskhost ${target}![getchanhost $target $chan] $cbantype]"
-	} else {
-		set banmask "$target"
-	}
-	
-	
-	if {$banmask eq ""} {
-		putquick "PRIVMSG $nick :\037ERROR\037: Incorrect Parameters. \037SYNTAX\037: [getBanTriga]gban <nick|*!*@banmask.etc>"
-		return
-	}
-	
-	if {[isban $banmask]} {
-		putquick "PRIVMSG $nick :\037ERROR\037: Banmask already exists."
-		return
-	}
-	
-	set banreason [join $banreason]
-	
-	newban $banmask $nick $banreason 0
-	putquick "PRIVMSG $nick :Successfully Added Global Ban: $banmask for: [channels]"
-	putquick "PRIVMSG $nick :If this banmask isn't accurate, remove it with: [getBanTriga]ungban $banmask"
-	return 0
-}
-
-bind pub - ${banstriga}ungban unbanglob:pub
-proc unbanglob:pub {nick uhost hand chan text} {
-	global banglobflags
-	
-	if {![matchattr [nick2hand $nick] $banglobflags]} {
-		return
-	}
-	
-	set unbanmask [lindex [split $text] 0]
-	
-	if {$unbanmask eq ""} {
-		putquick "PRIVMSG $nick :\037ERROR\037: Incorrect Parameters. \037SYNTAX\037: [getBanTriga]ungban *!*@banmask.etc"
-		return
-	}
-	
-	if {![isban $unbanmask]} {
-		putquick "PRIVMSG $nick :\037ERROR\037: Banmask not Found."
-		return
-	}
-	
-	killban $unbanmask
-	putquick "PRIVMSG $nick :Successfully Deleted Global Ban: $unbanmask for: [channels]"
 	return 0
 }
 
