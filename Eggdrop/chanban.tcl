@@ -2,6 +2,8 @@
 # bans.tcl v1.0 (11/11/2021)
 # Based on ist0k original script (https://github.com/ist0k/eggdrop-TCL/blob/master/bans.tcl)
 ##########
+# Last update: 26/11/2021
+##########
 # Public Commands:
 # bans <=- shows channel ban list.
 # globans <=- shows global ban list.
@@ -19,14 +21,14 @@ set banstriga "@"
 
 # Set global access flags to use these commands (default: o)
 # This global access flag is able to use: !bans, !globans, !gban, !delgban, !addban, !delban
-set banglobflags "o"
+set banglobflags "m"
 
 # Set channel access flags to use these commands (default: m)
 # This channel access flag is only able to use: !bans, !addban, !delban (like akick, for SOP)
-set banchanflags "m"
+set banchanflags "o"
 
 # Set the default ban reason for when banning the user
-set banreason "User has been banned from the channel."
+set defbanreason "User has been banned from the channel."
 
 # Set the banmask to use in banning the user  
 #	Available types are:
@@ -57,22 +59,27 @@ bind pub - ${banstriga}bans chan:bans
 proc chan:bans {nick uhost hand chan text} {
 	global banglobflags banchanflags
 	
+	if {![matchattr [nick2hand $nick] $banglobflags|$banchanflags $chan]} {
+		putquick "PRIVMSG $chan :\037ERROR!\037 You don't have access, ${nick}!"
+		return
+	}
+	
 	if {[matchattr [nick2hand $nick] $banglobflags|$banchanflags $chan]} {
 		putquick "PRIVMSG $chan :\002BANLIST\002 for $chan sent to $nick"
-		putserv "PRIVMSG $nick :********* \002$chan BanList\002 **********"
+		putserv "PRIVMSG $nick :********** \002\00302$chan\003 Ban List \00303Start\003\002 **********"
 		
 		foreach botban [banlist $chan] {
 			set banmask "[lindex [split $botban] 0]"
 			set creator "[lindex [split $botban] end]"
 			putserv "PRIVMSG $nick :\002BanMask\002: $banmask - \002Added by:\002 $creator"
 		}
-		putserv "PRIVMSG $nick :********** \002$chan BanList \037END\037\002 **********"
+		putserv "PRIVMSG $nick :********** \002\00302$chan\003 Ban List \00304End\003\002 **********"
 	}
 }
 
 bind msg - bans ban:list
 proc ban:list {nick uhost hand text} {
-	global banglobflags banchanflags banreason
+	global banglobflags banchanflags
 	
 	set chan [lindex [split $text] 0]
 	
@@ -86,21 +93,22 @@ proc ban:list {nick uhost hand text} {
 		return
 	}
 	
-	putserv "PRIVMSG $nick :********** \002$chan Ban List\002 **********"
+	putserv "PRIVMSG $nick :********** \002\00302$chan\003 Ban List \00303Start\003\002 **********"
 	foreach chanban [banlist $chan] {
 		set banmask "[lindex [split $chanban] 0]"
 		set creator "[lindex [split $chanban] end]"
 		putquick "PRIVMSG $nick :\002BanMask\002: $banmask - \002Added by:\002 $creator"
 	}
-	putserv "PRIVMSG $nick :********** \002$chan Ban List \037END\037\002 **********"
+	putserv "PRIVMSG $nick :********** \002\00302$chan\003 Ban List \00304End\003\002 **********"
 	return 0
 }
 
 bind pub - ${banstriga}ban banint:pub
 proc banint:pub {nick uhost hand chan text} {
-	global banglobflags banchanflags banreason cbantype
+	global banglobflags banchanflags defbanreason cbantype
 	
 	if {![matchattr [nick2hand $nick] $banglobflags|$banchanflags $chan]} {
+		putquick "PRIVMSG $chan :\037ERROR!\037 You don't have access, ${nick}!"
 		return
 	}
 	
@@ -121,7 +129,7 @@ proc banint:pub {nick uhost hand chan text} {
 		return
 	}
 	
-	set banreason [join $banreason]
+	set banreason [join $defbanreason]
 	
 	putquick "MODE $chan +b $banmask"
 	newchanban "$chan" "$banmask" "$nick" "$banreason" 0
@@ -133,7 +141,7 @@ proc banint:pub {nick uhost hand chan text} {
 
 bind msg - ban banint:msg
 proc banint:msg {nick uhost hand text} {
-	global banglobflags banchanflags banreason cbantype
+	global banglobflags banchanflags defbanreason cbantype
 	
 	set chan [lindex [split $text] 0]
 	set target [lindex [split $text] 1]
@@ -144,7 +152,7 @@ proc banint:msg {nick uhost hand text} {
 	}
 	
 	if {![matchattr [nick2hand $nick] $banglobflags|$banchanflags $chan]} {
-		putquick "PRIVMSG $nick :\037ERROR!\037 You don't have access"
+		putquick "PRIVMSG $nick :\037ERROR!\037 You don't have access, ${nick}!"
 		return
 	}
 	
@@ -164,7 +172,7 @@ proc banint:msg {nick uhost hand text} {
 		return
 	}
 	
-	set banreason [join $banreason]
+	set banreason [join $defbanreason]
 	
 	putquick "MODE $chan +b $banmask"
 	newchanban "$chan" "$banmask" "$nick" "$banreason" 0
@@ -179,6 +187,7 @@ proc unbanint:pub {nick uhost hand chan text} {
 	global banglobflags banchanflags
 	
 	if {![matchattr [nick2hand $nick] $banglobflags|$banchanflags $chan]} {
+		putquick "PRIVMSG $chan :\037ERROR!\037 You don't have access, ${nick}!"
 		return
 	}
 	
@@ -212,7 +221,7 @@ proc unbanint:msg {nick uhost hand text} {
 	}
 	
 	if {![matchattr [nick2hand $nick] $banglobflags|$banchanflags $chan]} {
-		putquick "PRIVMSG $nick :\037ERROR!\037 You don't have access"
+		putquick "PRIVMSG $nick :\037ERROR!\037 You don't have access, ${nick}!"
 		return
 	}
 	
@@ -231,4 +240,4 @@ proc unbanint:msg {nick uhost hand text} {
 	return 0
 }
 
-putlog ".: Bans.tcl by PeGaSuS loaded :."
+putlog ".: Bans.tcl by v1.2 PeGaSuS loaded :."
