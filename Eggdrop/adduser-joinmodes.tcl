@@ -2,6 +2,8 @@
 # adduser-joinmodes.tcl v1.0 (11/11/2021)
 # Based on ist0k original script (https://github.com/ist0k/eggdrop-TCL/blob/master/adduser-joinmodes.tcl)
 ##########
+# Last update: 26/11/2021
+##########
 # ----- ADDING USERS ----- (Basic User adding)
 # Commands are:
 # !addaop nickname
@@ -283,4 +285,4 @@ proc join:modes {nick uhost hand chan} {
 	}
 }
 
-putlog ".: AddUSER+JoinMODEs by PeGaSuS loaded :."
+putlog ".: AddUSER+JoinMODEs v1.2 by PeGaSuS loaded :."
