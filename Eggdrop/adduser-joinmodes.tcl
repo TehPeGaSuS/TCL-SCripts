@@ -1,5 +1,5 @@
 ##########
-# adduser-joinmodes.tcl v1.1 (13/11/2021)
+# adduser-joinmodes.tcl v1.0 (11/11/2021)
 # Based on ist0k original script (https://github.com/ist0k/eggdrop-TCL/blob/master/adduser-joinmodes.tcl)
 ##########
 # ----- ADDING USERS ----- (Basic User adding)
@@ -25,22 +25,28 @@ set addusertrig "@"
 
 # Set the mask type to use when adding users
 #	Available types are:
-#	0 *!user@host
-#	1 *!*user@host
-#	2 *!*@host
-#	3 *!*user@*.host
-#	4 *!*@*.host
-#	5 nick!user@host
-#	6 nick!*user@host
-#	7 nick!*@host
-#	8 nick!*user@*.host
-#	9 nick!*@*.host
-set masktype "1"
+#	0	*!user@host
+#	1	*!*user@host
+#	2	*!*@host
+#	3	*!*user@*.host
+# 	4	*!*@*.host
+#	5	nick!user@host
+#	6	nick!*user@host
+#	7	nick!*@host
+#	8	nick!*user@*.host
+#	9	nick!*@*.host
+set masktype "3"
 
 # You don't need to edit the access flags. They are added like this because each command requires different access.
 # This is to ensure that user's can't add/del those with more access. If you wish to edit them, edit the proc directly.
 
 # ------EDIT COMPLETE!!------
+
+###############
+# DON'T TOUCH ANYTHING BELOW UNLESS YOU KNOW WHAT YOU ARE DOING
+###############
+# If you touch the code below and then complain the script "suddenly stopped working" I'll touch you at night. (THANKS thommey)
+###############
 setudef flag joinmode
 
 proc addTrigger {} {
@@ -277,4 +283,4 @@ proc join:modes {nick uhost hand chan} {
 	}
 }
 
-putlog ".: AddUSER+JoinMODEs v1.1 by PeGaSuS loaded :."
+putlog ".: AddUSER+JoinMODEs by PeGaSuS loaded :."
