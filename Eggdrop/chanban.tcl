@@ -1,17 +1,19 @@
 ##########
-# bans.tcl v1.0 (11/11/2021)
+# bans.tcl v1.1 (11/11/2021)
 # Based on ist0k original script (https://github.com/ist0k/eggdrop-TCL/blob/master/bans.tcl)
-##########
-# Last update: 26/11/2021
 ##########
 # Public Commands:
 # bans <=- shows channel ban list.
+# stick <banmask> <=- adds a channel stick ban
+# stickbans <=- shows channel stick ban list.
 # globans <=- shows global ban list.
 # ban <nick|*!*@banmask.etc> <=- adds a channel ban.
 # unban <*!*@banmask.etc> <=- removes a channel ban.
 ##########
 # MSG Commands
 # bans #channel <=- shows channel ban list.
+# bans <=- shows channel ban list.
+# stickbans <=- shows channel stick ban list.
 # ban <nick|*!*@banmask.etc> <=- adds a channel ban.
 # unban <*!*@banmask.etc> <=- removes a channel ban.
 ##########
@@ -66,14 +68,14 @@ proc chan:bans {nick uhost hand chan text} {
 	
 	if {[matchattr [nick2hand $nick] $banglobflags|$banchanflags $chan]} {
 		putquick "PRIVMSG $chan :\002BANLIST\002 for $chan sent to $nick"
-		putserv "PRIVMSG $nick :********** \002\00302$chan\003 Ban List \00303Start\003\002 **********"
+		putserv "PRIVMSG $nick :********** \002$chan BanList\002 **********"
 		
 		foreach botban [banlist $chan] {
 			set banmask "[lindex [split $botban] 0]"
 			set creator "[lindex [split $botban] end]"
 			putserv "PRIVMSG $nick :\002BanMask\002: $banmask - \002Added by:\002 $creator"
 		}
-		putserv "PRIVMSG $nick :********** \002\00302$chan\003 Ban List \00304End\003\002 **********"
+		putserv "PRIVMSG $nick :********** \002$chan BanList \037END\037\002 **********"
 	}
 }
 
@@ -84,7 +86,7 @@ proc ban:list {nick uhost hand text} {
 	set chan [lindex [split $text] 0]
 	
 	if {![matchstr "#*" $chan]} {
-		putquick "PRIVMSG $nick :\037ERROR!\037 Syntax: bans <#channel>"
+		putquick "PRIVMSG $nick :\037ERROR\037: Incorrect Parameters. \037SYNTAX\037: bans <#channel>"
 		return
 	}
 	
@@ -93,13 +95,65 @@ proc ban:list {nick uhost hand text} {
 		return
 	}
 	
-	putserv "PRIVMSG $nick :********** \002\00302$chan\003 Ban List \00303Start\003\002 **********"
+	putserv "PRIVMSG $nick :********** \002$chan Ban List\002 **********"
 	foreach chanban [banlist $chan] {
 		set banmask "[lindex [split $chanban] 0]"
 		set creator "[lindex [split $chanban] end]"
 		putquick "PRIVMSG $nick :\002BanMask\002: $banmask - \002Added by:\002 $creator"
 	}
-	putserv "PRIVMSG $nick :********** \002\00302$chan\003 Ban List \00304End\003\002 **********"
+	putserv "PRIVMSG $nick :********** \002$chan Ban List \037END\037\002 **********"
+	return 0
+}
+
+bind pub - ${banstriga}stickbans chan:stickbans
+proc chan:stickbans {nick uhost hand chan text} {
+	global banglobflags banchanflags
+	
+	if {![matchattr [nick2hand $nick] $banglobflags|$banchanflags $chan]} {
+		putquick "PRIVMSG $chan :\037ERROR!\037 You don't have access, ${nick}!"
+		return
+	}
+	
+	if {[matchattr [nick2hand $nick] $banglobflags|$banchanflags $chan]} {
+		putquick "PRIVMSG $chan :\002STICK BANLIST\002 for $chan sent to $nick"
+		putserv "PRIVMSG $nick :********** \002$chan Stick BanList\002 **********"
+		
+		foreach botban [banlist $chan] {
+			if {[isbansticky $botban $chan]} {
+				set banmask "[lindex [split $botban] 0]"
+				set creator "[lindex [split $botban] end]"
+				putserv "PRIVMSG $nick :\002Stick BanMask\002: $banmask - \002Added by:\002 $creator"
+			}
+		}
+		putserv "PRIVMSG $nick :********** \002$chan Stick BanList \037END\037\002 **********"
+	}
+}
+
+bind msg - stickbans stickban:list
+proc stickban:list {nick uhost hand text} {
+	global banglobflags banchanflags
+	
+	set chan [lindex [split $text] 0]
+	
+	if {![matchstr "#*" $chan]} {
+		putquick "PRIVMSG $nick :\037ERROR\037: Incorrect Parameters. \037SYNTAX\037: stickbans <#channel>"
+		return
+	}
+	
+	if {![matchattr [nick2hand $nick] $banglobflags|$banchanflags $chan]} {
+		putquick "PRIVMSG $nick :\037ERROR!\037 You don't have access"
+		return
+	}
+	
+	putserv "PRIVMSG $nick :********** \002$chan Stick Ban List\002 **********"
+	foreach chanban [banlist $chan] {
+		if {[isbansticky $chanban $chan]} {
+			set banmask "[lindex [split $chanban] 0]"
+			set creator "[lindex [split $chanban] end]"
+			putquick "PRIVMSG $nick :\002Stick BanMask\002: $banmask - \002Added by:\002 $creator"
+		}
+	}
+	putserv "PRIVMSG $nick :********** \002$chan Stick Ban List \037END\037\002 **********"
 	return 0
 }
 
@@ -147,7 +201,7 @@ proc banint:msg {nick uhost hand text} {
 	set target [lindex [split $text] 1]
 	
 	if {![matchstr "#*" $chan]} {
-		putquick "PRIVMSG $nick :\037ERROR\037: [getBanTriga]ban #chan <nick|*!*@banmask.etc>"
+		putquick "PRIVMSG $nick :\037ERROR\037: Incorrect Parameters. \037SYNTAX\037: ban #chan <nick|*!*@banmask.etc>"
 		return
 	}
 	
@@ -157,7 +211,7 @@ proc banint:msg {nick uhost hand text} {
 	}
 	
 	if {$target eq ""} {
-		putquick "PRIVMSG $nick :\037ERROR\037: [getBanTriga]ban #chan <nick|*!*@banmask.etc>"
+		putquick "PRIVMSG $nick :\037ERROR\037: Incorrect Parameters. \037SYNTAX\037: ban #chan <nick|*!*@banmask.etc>"
 		return
 	}
 	
@@ -177,7 +231,100 @@ proc banint:msg {nick uhost hand text} {
 	putquick "MODE $chan +b $banmask"
 	newchanban "$chan" "$banmask" "$nick" "$banreason" 0
 	putquick "PRIVMSG $nick :Successfully Added Ban: $banmask for $chan"
-	putquick "PRIVMSG $nick :If this banmask isn't accurate, remove it with: [getBanTriga]unban $banmask"
+	putquick "PRIVMSG $nick :If this banmask isn't accurate, remove it with: unban $banmask"
+	
+	return 0
+}
+
+bind pub - ${banstriga}stickban stick:pub
+proc stick:pub {nick uhost hand chan text} {
+	global banglobflags banchanflags defbanreason cbantype
+	
+	if {![matchattr [nick2hand $nick] $banglobflags|$banchanflags $chan]} {
+		putquick "PRIVMSG $chan :\037ERROR!\037 You don't have access, ${nick}!"
+		return
+	}
+	
+	set target [lindex [split $text] 0]
+	
+	if {$target eq ""} {
+		putquick "PRIVMSG $chan :\037ERROR\037: Incorrect Parameters. \037SYNTAX\037: [getBanTriga]stick <nick|*!*@banmask.etc>"
+	}
+	
+	if {[onchan $target $chan]} {
+		set banmask "[maskhost ${target}![getchanhost $target $chan] $cbantype]"
+	} else {
+		set banmask "$target"
+	}
+	
+	if {[isban $banmask $chan]} {
+		if {![isbansticky $banmask $chan]} {
+			putquick "MODE $chan +b $banmask"
+			stickban "$banmask" $chan
+			putquick "PRIVMSG $nick :Successfully Added Stick Ban: $banmask for $chan"
+			putquick "PRIVMSG $nick :If this banmask isn't accurate, remove it with: [getBanTriga]unstickban $banmask"
+		} else {
+			putquick "PRIVMSG $chan :\037ERROR\037: Banmask is already sticky."
+			return
+		}
+	}
+	
+	set banreason [join $defbanreason]
+	
+	putquick "MODE $chan +b $banmask"
+	newchanban "$chan" "$banmask" "$nick" "$banreason" 0 "sticky"
+	putquick "PRIVMSG $nick :Successfully Added Stick Ban: $banmask for $chan"
+	putquick "PRIVMSG $nick :If this banmask isn't accurate, remove it with: unstickban $banmask"
+	
+	return 0
+}
+
+bind msg - stickban stick:msg
+proc stick:msg {nick uhost hand text} {
+	global banglobflags banchanflags defbanreason cbantype
+	
+	set chan [lindex [split $text] 0]
+	set target [lindex [split $text] 1]
+	
+	if {![matchstr "#*" $chan]} {
+		putquick "PRIVMSG $nick :\037ERROR\037: Incorrect Parameters. \037SYNTAX\037: stickban #chan <nick|*!*@banmask.etc>"
+		return
+	}
+	
+	if {![matchattr [nick2hand $nick] $banglobflags|$banchanflags $chan]} {
+		putquick "PRIVMSG $nick :\037ERROR!\037 You don't have access, ${nick}!"
+		return
+	}
+	
+	if {$target eq ""} {
+		putquick "PRIVMSG $nick :\037ERROR\037: Incorrect Parameters. \037SYNTAX\037: stickban #chan <nick|*!*@banmask.etc>"
+		return
+	}
+	
+	if {[onchan $target $chan]} {
+		set banmask "[maskhost ${target}![getchanhost $target $chan] $cbantype]"
+	} else {
+		set banmask "$target"
+	}
+	
+	if {[isban $banmask $chan]} {
+		if {![isbansticky $banmask $chan]} {
+			putquick "MODE $chan +b $banmask"
+			stickban "$banmask" $chan
+			putquick "PRIVMSG $nick :Successfully Added Stick Ban: $banmask for $chan"
+			putquick "PRIVMSG $nick :If this banmask isn't accurate, remove it with: unstickban $banmask"
+		} else {
+			putquick "PRIVMSG $nick :\037ERROR\037: Banmask is already sticky."
+			return
+		}
+	}
+	
+	set banreason [join $defbanreason]
+	
+	putquick "MODE $chan +b $banmask"
+	newchanban "$chan" "$banmask" "$nick" "$banreason" 0 "sticky"
+	putquick "PRIVMSG $nick :Successfully Added Stick Ban: $banmask for $chan"
+	putquick "PRIVMSG $nick :If this banmask isn't accurate, remove it with: unstickban $banmask"
 	
 	return 0
 }
@@ -216,7 +363,7 @@ proc unbanint:msg {nick uhost hand text} {
 	set unbanmask [lindex [split $text] 1]
 	
 	if {![matchstr "#*" $chan]} {
-		putquick "PRIVMSG $nick :\037ERROR\037: [getBanTriga]unban #chan <*!*@banmask.etc>"
+		putquick "PRIVMSG $nick :\037ERROR\037: Incorrect Parameters. \037SYNTAX\037: unban #chan <*!*@banmask.etc>"
 		return
 	}
 	
@@ -226,7 +373,7 @@ proc unbanint:msg {nick uhost hand text} {
 	}
 	
 	if {$unbanmask eq ""} {
-		putquick "PRIVMSG $nick :\037ERROR\037: [getBanTriga]unban #chan <*!*@banmask.etc>"
+		putquick "PRIVMSG $nick :\037ERROR\037: Incorrect Parameters. \037SYNTAX\037: unban #chan <*!*@banmask.etc>"
 		return
 	}
 	
@@ -240,4 +387,4 @@ proc unbanint:msg {nick uhost hand text} {
 	return 0
 }
 
-putlog ".: Bans.tcl by v1.2 PeGaSuS loaded :."
+putlog ".: Bans.tcl v1.1 by PeGaSuS loaded :."
