@@ -78,7 +78,7 @@ proc chan:bancmds {nick uhost hand chan text} {
 		return
 	}
 	
-	putserv "PRIVMSG $chan :${nick}: The available commands are [getBanTriga]bans, [getBanTriga]stickbans, [getBanTriga]addban, [getBanTriga]delban, [getBanTriga]sticky, [delsticky]"
+	putserv "PRIVMSG $chan :${nick}: The available commands are [getBanTriga]bans, [getBanTriga]stickbans, [getBanTriga]addban, [getBanTriga]delban, [getBanTriga]sticky, [getBanTriga]delsticky"
 	return
 }
 
@@ -93,7 +93,7 @@ proc msg:bancmds {nick uhost hand text} {
 		return
 	}
 	
-	putserv "PRIVMSG $chan :${nick}: The available commands are [getBanTriga]bans, [getBanTriga]stickbans, [getBanTriga]addban, [getBanTriga]delban, [getBanTriga]sticky, [delsticky]"
+	putserv "PRIVMSG $chan :${nick}: The available commands are [getBanTriga]bans, [getBanTriga]stickbans, [getBanTriga]addban, [getBanTriga]delban, [getBanTriga]sticky, [getBanTriga]delsticky"
 	return
 }
 	
