@@ -1,12 +1,13 @@
 ##########
 # Script version and date
 ##########
-set scriptname "Chanban.tcl v1.3 (11/05/2022)"
+set scriptname "Chanban.tcl v1.3a (11/05/2022)"
 
 ##########
 # Based on ist0k original script (https://github.com/ist0k/eggdrop-TCL/blob/master/bans.tcl)
 ##########
 # Public Commands:
+# bancmds <= shows the list of commands.
 # bans <=- shows channel ban list.
 # stickbans <=- shows channel stick ban list.
 # addban <nick|banmask> [reason] <=- adds a channel ban (reason is optional).
@@ -15,6 +16,7 @@ set scriptname "Chanban.tcl v1.3 (11/05/2022)"
 # delsticky <banmask> <=- removes a stick ban (without removing it from the ban list).
 ##########
 # MSG Commands
+# bancmds <#chan> <= shows the list of commands (chan is needed to check access).
 # bans #channel <=- shows channel ban list.
 # stickbans #channel <=- shows channel stick ban list.
 # addban <nick|banmask> [reason] <=- adds a channel ban (reason is optional).
@@ -61,6 +63,40 @@ proc getBanTriga {} {
 	global banstriga
 	return $banstriga
 }
+
+bind pub - ${banstriga}bancmds chan:bancmds
+proc chan:bancmds {nick uhost hand chan text} {
+	global banglobflags banchanflags
+	
+	if {![matchattr $hand $banglobflags|$banchanflags $chan]} {
+		putserv "PRIVMSG $chan :\037ERROR!\037 You don't have access, ${nick}!"
+		return
+	}
+	
+	if {![matchstr "#*" $chan]} {
+		putserv "PRIVMSG $nick :\037ERROR\037: Incorrect Parameters. \037SYNTAX\037: bancmds <#channel>"
+		return
+	}
+	
+	putserv "PRIVMSG $chan :${nick}: The available commands are [getBanTriga]bans, [getBanTriga]stickbans, [getBanTriga]addban, [getBanTriga]delban, [getBanTriga]sticky, [delsticky]"
+	return
+}
+
+bind msg - bancmds msg:bancmds
+proc msg:bancmds {nick uhost hand text} {
+	global banglobflags banchanflags
+	
+	set chan [lindex [split $text] 1]
+	
+	if {![matchattr $hand $banglobflags|$banchanflags $chan]} {
+		putserv "PRIVMSG $chan :\037ERROR!\037 You don't have access, ${nick}!"
+		return
+	}
+	
+	putserv "PRIVMSG $chan :${nick}: The available commands are [getBanTriga]bans, [getBanTriga]stickbans, [getBanTriga]addban, [getBanTriga]delban, [getBanTriga]sticky, [delsticky]"
+	return
+}
+	
 
 bind pub - ${banstriga}bans chan:bans
 proc chan:bans {nick uhost hand chan text} {
