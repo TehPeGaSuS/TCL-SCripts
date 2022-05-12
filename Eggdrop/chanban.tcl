@@ -86,14 +86,14 @@ bind msg - bancmds msg:bancmds
 proc msg:bancmds {nick uhost hand text} {
 	global banglobflags banchanflags
 	
-	set chan [lindex [split $text] 1]
+	set chan [lindex [split $text] 0]
 	
 	if {![matchattr $hand $banglobflags|$banchanflags $chan]} {
-		putserv "PRIVMSG $chan :\037ERROR!\037 You don't have access, ${nick}!"
+		putserv "PRIVMSG $nick :\037ERROR!\037 You don't have access, ${nick}!"
 		return
 	}
 	
-	putserv "PRIVMSG $chan :${nick}: The available commands are [getBanTriga]bans, [getBanTriga]stickbans, [getBanTriga]addban, [getBanTriga]delban, [getBanTriga]sticky, [getBanTriga]delsticky"
+	putserv "PRIVMSG $nick :The available commands are bans, stickbans, addban, delban, sticky, delsticky"
 	return
 }
 	
