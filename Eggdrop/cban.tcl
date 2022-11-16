@@ -280,7 +280,7 @@ namespace eval cban {
 	
 	# @addban
 	proc addban:pub {nick uhost hand chan text} {
-		global botnick botname
+		global botname
 		variable revengeBan
 		variable banReason
 		variable tchan "[lindex [split $text] 0]"
@@ -391,7 +391,6 @@ namespace eval cban {
 	
 	# @uncban
 	proc uncban:pub {nick uhost hand chan text} {
-		global botnick
 		
 		variable tchan "[lindex [split $text] 0]"
 		
@@ -440,7 +439,6 @@ namespace eval cban {
 	
 	# @bans
 	proc bans:pub {nick uhost hand chan text} {
-		global botnick
 		
 		variable tchan "[lindex [split $text] 0]"
 		
