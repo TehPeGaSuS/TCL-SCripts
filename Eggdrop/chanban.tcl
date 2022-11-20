@@ -11,7 +11,6 @@ namespace eval chanban {
 	# bancmds <=- shows the list of commands.
 	# bans <=- same as bancmds
 	# banlist <=- shows channel ban list.
-	# stickbans <=- shows channel stick ban list.
 	# addban <nick|banmask> [reason] <=- adds a channel ban (reason is optional).
 	# kb <nick|banmask> [reason] <=- adds a channel ban (reason is optional)
 	# delban <banmask.etc> <=- removes a channel ban.
@@ -25,7 +24,6 @@ namespace eval chanban {
 	# MSG Commands
 	# bancmds <#channel> <= shows the list of commands (chan is needed to check access).
 	# banlist <#channel> <=- shows channel ban list.
-	# stickbans <#channel> <=- shows channel stick ban list.
 	# addban <#channel> <nick|banmask> [reason] <=- adds a channel ban (reason is optional).
 	# kb <#channel> <nick|banmask> [reason] <=- adds a channel ban (reason is optional).
 	# delban <#channel> <banmask> <=- removes a channel ban.
@@ -87,7 +85,7 @@ namespace eval chanban {
 			return 0
 		}
 
-		putserv "PRIVMSG $chan :\002\[$nick\]\002 The available commands are: [::chanban::getBanTriga]banlist, [::chanban::getBanTriga]stickbans, [::chanban::getBanTriga]addban OR [::chanban::getBanTriga]kb, [::chanban::getBanTriga]delban OR [::chanban::getBanTriga]ub, [::chanban::getBanTriga]sticky, [::chanban::getBanTriga]delsticky, [::chanban::getBanTriga]gag, [::chanban::getBanTriga]ungag and [::chanban::getBanTriga]tban"
+		putserv "PRIVMSG $chan :\002\[$nick\]\002 The available commands are: [::chanban::getBanTriga]banlist, [::chanban::getBanTriga]addban OR [::chanban::getBanTriga]kb, [::chanban::getBanTriga]delban OR [::chanban::getBanTriga]ub, [::chanban::getBanTriga]sticky, [::chanban::getBanTriga]delsticky, [::chanban::getBanTriga]gag, [::chanban::getBanTriga]ungag and [::chanban::getBanTriga]tban"
 		return 0
 	}
 
@@ -119,7 +117,7 @@ namespace eval chanban {
 			return 0
 		}
 
-		putserv "PRIVMSG $nick :The available commands are: banlist <#channel>, stickbans <#channel>, addban <#channel> OR kb <#channel>, delban <#channel> OR ub <#channel>, sticky <#channel>, delsticky <#channel>, gag <#channel> <nick>, ungag <#channel> <nick> and tban <#channel> <nick> <duration in hours (1-24)"
+		putserv "PRIVMSG $nick :The available commands are: banlist <#channel>, addban <#channel> OR kb <#channel>, delban <#channel> OR ub <#channel>, sticky <#channel>, delsticky <#channel>, gag <#channel> <nick>, ungag <#channel> <nick> and tban <#channel> <nick> <duration in hours (1-24)"
 		return 0
 	}
 
@@ -189,68 +187,6 @@ namespace eval chanban {
 			putserv "PRIVMSG $nick :\002BanMask\002: $banmask - \002Added by:\002 $creator - \002Sticky:\002 $status\002"
 		}
 		putserv "PRIVMSG $nick :********** \002$chan Ban List \037END\037\002 **********"
-		return 0
-	}
-
-	bind pub - ${::chanban::banstriga}stickbans ::chanban::chan:stickbans
-	proc chan:stickbans {nick uhost hand chan text} {
-		variable banglobflags
-		variable banchanflags
-
-		if {![matchattr $hand $banglobflags|$banchanflags $chan]} {
-			putserv "PRIVMSG $chan :\002\[$nick\]\002 \037ERROR!\037 You don't have access!"
-			return 0
-		}
-
-		putserv "PRIVMSG $chan :\002STICK BANLIST\002 for $chan sent to $nick"
-		putserv "PRIVMSG $nick :********** \002$chan Stick BanList\002 **********"
-		foreach botban [banlist $chan] {
-			variable banmask "[lindex $botban 0]"
-			variable creator "[lindex $botban end]"
-			if {[isbansticky $banmask $chan]} {
-				putserv "PRIVMSG $nick :\002Stick BanMask\002: $banmask - \002Added by:\002 $creator"
-			}
-		}
-		putserv "PRIVMSG $nick :********** \002$chan Stick BanList \037END\037\002 **********"
-		return 0
-	}
-
-	bind msg - stickbans ::chanban::stickban:list
-	proc stickban:list {nick uhost hand text} {
-		variable banglobflags
-		variable banchanflags
-
-		variable chan [lindex [split $text] 0]
-		
-		if {$chan eq ""} {
-			putserv "PRIVMSG $nick :\037ERROR\037: Incorrect Parameters. \037SYNTAX\037: stickbans <#channel>"
-			return 0
-		}
-
-		if {![matchstr "#*" $chan]} {
-			putserv "PRIVMSG $nick :\037ERROR\037: Incorrect Parameters. \037SYNTAX\037: stickbans <#channel>"
-			return 0
-		}
-		
-		if {![validchan $chan]} {
-			putserv "PRIVMSG $nick :\037ERROR\037: Invalid channel name."
-			return 0
-		}
-
-		if {![matchattr $hand $banglobflags|$banchanflags $chan]} {
-			putserv "PRIVMSG $nick :\002\[$chan\]\002 \037ERROR!\037 You don't have access!"
-			return 0
-		}
-
-		putserv "PRIVMSG $nick :********** \002$chan Stick Ban List\002 **********"
-		foreach chanban [banlist $chan] {
-			variable banmask "[lindex $chanban 0]"
-			variable creator "[lindex $chanban end]"
-			if {[isbansticky $banmask $chan]} {
-				putserv "PRIVMSG $nick :\002Stick BanMask\002: $banmask - \002Added by:\002 $creator"
-			}
-		}
-		putserv "PRIVMSG $nick :********** \002$chan Stick Ban List \037END\037\002 **********"
 		return 0
 	}
 
