@@ -1,2 +1,2 @@
 # MyScripts
-Initia repo
+Initial repo
