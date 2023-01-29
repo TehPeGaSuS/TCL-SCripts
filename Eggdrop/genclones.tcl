@@ -9,6 +9,9 @@ namespace eval genclones {
 	# CONFIGURATION #
 	#################
 	
+	# Trigger to use with the commands
+	variable zncTrigger "!"
+	
 	# IP that will be used by the clones
 	variable bindhost "2001:4860:4860::8888"
 	
@@ -24,12 +27,12 @@ namespace eval genclones {
 	# IRC port (with + before the port number if using SSL/TLS)
 	variable ircport "+6697"
 	
-	# Trigger to use with the commands
-	variable zncTrigger "!"
-	
 	# Flag to protect users from being deleted (default to f)
 	# Don't forget to `.chattr <user> +f` via partyline to prevent them from being deleted
 	variable protected "f"
+	
+	# How long should the clones nicknames be?
+	variable nclength "12"
 	
 	#########
 	# BINDS #
@@ -53,9 +56,8 @@ namespace eval genclones {
 	# If you touch the code below and then complain the script "suddenly stopped working" I'll touch you at night. #
 	################################################################################################################
 	
-	# This is how we generate a random nickname with uppercase,
-	# lowercase letters and 12 characters long
-	variable target "[randstring 12 abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ]"
+	# This is how we generate a random nickname with uppercase and lowercase letters
+	variable target "[randstring $::genclones::nclength abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ]"
 	
 	# This is how we get the tigger to be used on messages and inside procs
 	proc getZncTrigger {} {
