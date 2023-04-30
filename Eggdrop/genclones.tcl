@@ -18,21 +18,27 @@ namespace eval genclones {
 	# Password for the clones (can be anything)
 	variable passwd "VeenuLeophah0peiha0ib0ae"
 	
+	# How long should the clones nicknames be?
+	variable nclength "12"
+	
 	# Network name
 	variable netname "example"
 	
 	# IRC hostname
 	variable irchost "irc.example.org"
 	
-	# IRC port (with + before the port number if using SSL/TLS)
+	# IRC port (with "+" before the port number if using SSL/TLS)
 	variable ircport "+6697"
 	
-	# Flag to protect users from being deleted (default to f)
-	# Don't forget to `.chattr <user> +f` via partyline to prevent them from being deleted
-	variable protected "f"
+	# Protected users from being deleted, all LOWERCASE (one per line, enclosed in quotes)
+	# This prevents the user and other people with access from being deleted from the bot
+	# when we call the command "!delclones"
+	variable protected {
+		"-HQ"
+		"admin1"
+		"admin2"
+	}
 	
-	# How long should the clones nicknames be?
-	variable nclength "12"
 	
 	#########
 	# BINDS #
@@ -55,9 +61,6 @@ namespace eval genclones {
 	################################################################################################################
 	# If you touch the code below and then complain the script "suddenly stopped working" I'll touch you at night. #
 	################################################################################################################
-	
-	# This is how we generate a random nickname with uppercase and lowercase letters
-	variable target "[randstring $::genclones::nclength abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ]"
 	
 	# This is how we get the tigger to be used on messages and inside procs
 	proc getZncTrigger {} {
@@ -91,8 +94,8 @@ namespace eval genclones {
 		set i 0
 		putnow "PRIVMSG $chan :Starting generation of $clonenum clones."
 		while {$i < $clonenum} {
-			incr i	
-			after 5000 [list [create_user $nick $uhost $hand $chan $text]]
+			incr i
+			create_user $nick $uhost $hand $chan $text
 		}
 		putnow "PRIVMSG $chan :Generated $i clones."
 		return 0
@@ -101,25 +104,23 @@ namespace eval genclones {
 	###
 	proc create_user {nick uhost hand chan text} {
 		
+		variable target "[randstring $::genclones::nclength abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ]"
+		
 		if {![matchattr $hand n]} {
 			putnow "PRIVMSG $chan :ERROR! You don't have access, ${nick}."
 			return 0
 		}
-		
-		if {[validuser $::genclones::target]} {
-			return 0
-		}
 
-		adduser $::genclones::target ${::genclones::target}!*@*
-		putnow "PRIVMSG *controlpanel :AddUser $::genclones::target $::genclones::passswd"
-		putnow "PRIVMSG *controlpanel :AddNetwork $::genclones::target $::genclones::netname"
-		putnow "PRIVMSG *controlpanel :Set BindHost $::genclones::target $::genclones::bindhost"
-		putnow "PRIVMSG *controlpanel :AddChan $::genclones::target $::genclones::netname #CloneX"
-		putnow "PRIVMSG *controlpanel :LoadNetModule $::genclones::target $::genclones::netname keepnick"
-		putnow "PRIVMSG *controlpanel :LoadNetModule $::genclones::target $::genclones::netname kickrejoin"
-		putnow "PRIVMSG *controlpanel :LoadNetModule $::genclones::target $::genclones::netname route_replies"
-		putnow "PRIVMSG *controlpanel :LoadNetModule $::genclones::target $::genclones::netname simple_away"
-		putnow "PRIVMSG *controlpanel :AddServer $::genclones::target $::genclones::netname $::genclones::irchost $::genclones::ircport"
+		adduser $target ${target}!*@*
+		putnow "PRIVMSG *controlpanel :AddUser $target $::genclones::passwd"
+		putnow "PRIVMSG *controlpanel :AddNetwork $target $::genclones::netname"
+		putnow "PRIVMSG *controlpanel :Set BindHost $target $::genclones::bindhost"
+		putnow "PRIVMSG *controlpanel :AddChan $target $::genclones::netname #CloneX"
+		putnow "PRIVMSG *controlpanel :LoadNetModule $target $::genclones::netname keepnick"
+		putnow "PRIVMSG *controlpanel :LoadNetModule $target $::genclones::netname kickrejoin"
+		putnow "PRIVMSG *controlpanel :LoadNetModule $target $::genclones::netname route_replies"
+		putnow "PRIVMSG *controlpanel :LoadNetModule $target $::genclones::netname simple_away"
+		putnow "PRIVMSG *controlpanel :AddServer $target $::genclones::netname $::genclones::irchost $::genclones::ircport"
 		return 0
 	}
 	
@@ -132,8 +133,9 @@ namespace eval genclones {
 		}
 		
 		foreach clone [split [userlist]] {
-			if {![matchattr $clone $::genclones::protected]} {
+			if {!([strlwr $clone] in [strlwr $::genclones::protected])} {
 				deluser $clone
+				putlog "Deleted clone: $clone"
 				putnow "PRIVMSG *controlpanel :DelUser $clone"
 			}
 		}
@@ -144,5 +146,5 @@ namespace eval genclones {
 	# END OF PROCS #
 	################
 	
-	putlog "::: CloneX TCL v1.0 loaded :::"
+	putlog "::: CloneX TCL v20.04.2023 loaded :::"
 };
