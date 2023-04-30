@@ -34,7 +34,7 @@ namespace eval genclones {
 	# This prevents the user and other people with access from being deleted from the bot
 	# when we call the command "!delclones"
 	variable protected {
-		"-HQ"
+		"-hq"
 		"admin1"
 		"admin2"
 	}
@@ -133,7 +133,7 @@ namespace eval genclones {
 		}
 		
 		foreach clone [split [userlist]] {
-			if {!([strlwr $clone] in [strlwr $::genclones::protected])} {
+			if {!([strlwr $clone] in $::genclones::protected)} {
 				deluser $clone
 				putlog "Deleted clone: $clone"
 				putnow "PRIVMSG *controlpanel :DelUser $clone"
