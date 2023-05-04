@@ -32,6 +32,9 @@ namespace eval genclones {
 	# IRC port (with "+" before the port number if using SSL/TLS)
 	variable ircport "+6697"
 	
+	# Channel for the clones to join
+	variable chanclone "#CloneX"
+	
 	# List of users that will be protected when deleting all the clones (such as bot admins, ops, etc)
 	# when we use the command "delclones", otherwise even bot owner will be deleted and lose bot access
 	# I strongly advise to keep "-hq"
@@ -41,6 +44,14 @@ namespace eval genclones {
 		"admin1"
 		"admin2"
 	}
+	
+	########################
+	# End of configuration #
+	#                      ##########################################
+	# DON'T TOUCH ANYTHING BELOW UNLESS YOU KNOW WHAT YOU ARE DOING #
+	#                                                               ################################################
+	# If you touch the code below and then complain the script "suddenly stopped working" I'll touch you at night. #
+	################################################################################################################
 	
 	
 	#########
@@ -115,7 +126,7 @@ namespace eval genclones {
 		putnow "PRIVMSG *controlpanel :AddUser $target $::genclones::passwd"
 		putnow "PRIVMSG *controlpanel :AddNetwork $target $::genclones::netname"
 		putnow "PRIVMSG *controlpanel :Set BindHost $target $::genclones::bindhost"
-		putnow "PRIVMSG *controlpanel :AddChan $target $::genclones::netname #CloneX"
+		putnow "PRIVMSG *controlpanel :AddChan $target $::genclones::netname $::genclones::chanclone"
 		putnow "PRIVMSG *controlpanel :LoadNetModule $target $::genclones::netname keepnick"
 		putnow "PRIVMSG *controlpanel :LoadNetModule $target $::genclones::netname kickrejoin"
 		putnow "PRIVMSG *controlpanel :LoadNetModule $target $::genclones::netname route_replies"
@@ -146,5 +157,5 @@ namespace eval genclones {
 	# END OF PROCS #
 	################
 	
-	putlog "::: CloneX TCL v04-05-2023_17:29 loaded :::"
+	putlog "::: CloneX TCL v04-05-2023_17:50 loaded :::"
 };
