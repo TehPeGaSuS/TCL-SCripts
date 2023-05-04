@@ -30,9 +30,10 @@ namespace eval genclones {
 	# IRC port (with "+" before the port number if using SSL/TLS)
 	variable ircport "+6697"
 	
-	# Protected users from being deleted, all LOWERCASE (one per line, enclosed in quotes)
-	# This prevents the user and other people with access from being deleted from the bot
-	# when we call the command "!delclones"
+	# List of users that will be protected when deleting all the clones (such as bot admins, ops, etc)
+	# when we use the command "delclones", otherwise even bot owner will be deleted and lose bot access
+	# I strongly advise to keep "-hq"
+	# One nick per line and all lowercase
 	variable protected {
 		"-hq"
 		"admin1"
@@ -146,5 +147,5 @@ namespace eval genclones {
 	# END OF PROCS #
 	################
 	
-	putlog "::: CloneX TCL v20.04.2023-19.36 loaded :::"
+	putlog "::: CloneX TCL v04-05-2023_17:04 loaded :::"
 };
