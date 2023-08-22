@@ -46,6 +46,11 @@
 # - Added PM commands to help keep anonymity
 # - Fixed logic within procedures to be more resilient
 # - More code cleanup
+###########
+# 16/11/2022
+# -= v2.5 =-
+# - Creating a 'rights' function (by: ZarTek-Creole)
+# - More code cleanup
 ##########
 
 ##########
@@ -89,30 +94,30 @@
 ##########
 # END OF COMMANDS
 ##########
-namespace eval cban {
+namespace eval ::cban {
 
 	##########
 	# CONFIGURATION
 	##########
 	# Trigger for the command
-	variable banTrigger "@"
+	variable banTrigger		"@"
 
 	# Default ban reason
-	variable banReason "User has has been banned from the channel!"
+	variable banReason 		"User has has been banned from the channel!"
 	
 	# Default kick reason
-	variable kickReason "Your behaviour is not conducive for the desired environment!"
+	variable kickReason 	"Your behaviour is not conducive for the desired environment!"
 
 	# How many minutes for the temp ban
-	variable banDuration "2"
+	variable banDuration 	"2"
 	
 	# Revenge kick reason when someone tries to ban the bot (%s will be replaced by the nick of
 	# the person that tried to ban the bot)
-	variable revengeBan "\002\00304Revenge Ban#\003\002 You wish %s! Next time, try to ban \00305yourself\003!"
+	variable revengeBan 	"\002\00304Revenge Ban#\003\002 You wish %s! Next time, try to ban \00305yourself\003!"
 	
 	# Revenge kick reason when someone tries to kick the bot (%s will be replaced by the nick that
 	# tried to kick the bot)
-	variable revengeKick "\002\00304Revenge Kick#\003\002 You wish %s! Next time, try to kick \00305yourself\003!"
+	variable revengeKick 	"\002\00304Revenge Kick#\003\002 You wish %s! Next time, try to kick \00305yourself\003!"
 
 	##########
 	# END OF CONFIGURATION
@@ -124,57 +129,19 @@ namespace eval cban {
 	# If you touch the code below and then complain the script "suddenly stopped working" I'll touch you at night. (THANKS thommey)
 	###############
 
+	##########
+	# Functions
+	##########
 	proc getBanTriga {} {
-		variable ::cban::banTrigger
-		return $::cban::banTrigger
+		variable banTrigger
+		return $banTrigger
 	}
-	
-	##########
-	# Public binds
-	##########
-	bind pub - ${banTrigger}cban ::cban::cban:pub
-	bind pub - ${banTrigger}uncban ::cban::uncban:pub
-	bind pub - ${banTrigger}addban ::cban::addban:pub
-	bind pub - ${banTrigger}tban ::cban::tban:pub
-	bind pub - ${banTrigger}kick ::cban::kick:pub
-	bind pub - ${banTrigger}bans ::cban::bans:pub
-	
-	##########
-	# PM binds
-	##########
-	bind msg - cban ::cban::cban:msg
-	bind msg - uncban ::cban::uncban:msg
-	bind msg - addban ::cban::addban:msg
-	bind msg - tban ::cban::tban:msg
-	bind msg - kick ::cban::kick:msg
-	bind msg - bans ::cban::bans:msg
-	
-	##########
-	# Public procs
-	##########
-	
-	# @cban
-	proc cban:pub {nick uhost hand chan text} {
-		global botnick
-		variable revengeBan
-		variable banReason
-		variable tchan "[lindex [split $text] 0]"
-		variable bantype "[channel get $tchan ban-type]"
-		
-		if {![matchstr "#*" $tchan]} {
-			variable tchan "$chan"
-			variable target "[lindex [split $text] 0]"
-		} else {
-			variable target "[lindex [split $text] 1]"
-		}
-		
-		variable banmask "[maskhost ${target}![getchanhost $target $tchan] $bantype]"
+	proc rights { chan nick tchan target } {
 
 		if {![isidentified $nick]} {
 			putserv "PRIVMSG $chan :ERROR! You need to be identified to use this command."
 			return 0
 		}
-		
 		if {![botonchan $tchan] || [channel get $tchan inactive]} {
 			putserv "PRIVMSG $chan :ERROR! I'm not on $tchan or $tchan is set as inactive."
 			return 0
@@ -199,6 +166,50 @@ namespace eval cban {
 			putserv "PRIVMSG $chan :ERROR! $target needs to be on $tchan"
 			return 0
 		}
+		return 1
+	}
+	##########
+	# Public binds
+	##########
+	bind pub - ${banTrigger}cban ::cban::cban:pub
+	bind pub - ${banTrigger}uncban ::cban::uncban:pub
+	bind pub - ${banTrigger}addban ::cban::addban:pub
+	bind pub - ${banTrigger}tban ::cban::tban:pub
+	bind pub - ${banTrigger}kick ::cban::kick:pub
+	bind pub - ${banTrigger}bans ::cban::bans:pub
+	
+	##########
+	# PM binds
+	##########
+	bind msg - cban ::cban::cban:msg
+	bind msg - uncban ::cban::uncban:msg
+	bind msg - addban ::cban::addban:msg
+	bind msg - tban ::cban::tban:msg
+	bind msg - kick ::cban::kick:msg
+	bind msg - bans ::cban::bans:msg
+	
+	##########
+	# Public procs
+	##########
+	# @cban
+	proc cban:pub {nick uhost hand chan text} {
+		global botnick
+		variable revengeBan
+		variable banReason
+		set tchan 			[lindex [split $text] 0]
+		set bantype 		[channel get $tchan ban-type]
+		
+		if {![matchstr "#*" $tchan]} {
+			set tchan 		$chan
+			set target 		[lindex [split $text] 0]
+		} else {
+			set target 		[lindex [split $text] 1]
+		}
+		
+		set banmask 		[maskhost ${target}![getchanhost $target $tchan] $bantype]
+
+
+		if { ! [rights $chan $nick $tchan $target] } { return }
 		
 		if {($target eq $botnick && $tchan eq $chan)} {
 			putkick $tchan $nick [format $revengeBan $nick]
@@ -212,7 +223,7 @@ namespace eval cban {
 		pushmode $tchan +b $banmask
 		newchanban "$tchan" "$banmask" "$nick" "$banReason" 0
 		putserv "PRIVMSG $chan :Added $banmask to $tchan ban list."
-		return 0
+		return 1
 	}
 
 	
@@ -221,47 +232,19 @@ namespace eval cban {
 		global botnick
 		variable banReason
 		variable revengeBan
-		variable tchan "[lindex [split $text] 0]"
-		variable bantype "[channel get $chan ban-type]"
+		set tchan 			[lindex [split $text] 0]
+		set bantype 		[channel get $chan ban-type]
 		
 		if {![matchstr "#*" $tchan]} {
-			variable tchan "$chan"
-			variable target "[lindex [split $text] 0]"
+			set tchan 		$chan
+			set target 		[lindex [split $text] 0]
 		} else {
-			variable target "[lindex [split $text] 1]"
+			set target 		[lindex [split $text] 1]
 		}
 		
-		variable banmask "[maskhost ${target}![getchanhost $target $tchan] $bantype]"
+		set banmask 		[maskhost ${target}![getchanhost $target $tchan] $bantype]
 
-		if {![isidentified $nick]} {
-			putserv "PRIVMSG $chan :ERROR! You need to be identified to use this command."
-			return 0
-		}
-		
-		if {![botonchan $tchan] || [channel get $tchan inactive]} {
-			putserv "PRIVMSG $chan :ERROR! I'm not on $tchan or $tchan is set as inactive."
-			return 0
-		}
-		
-		if {![botisop $tchan]} {
-			putserv "PRIVMSG $chan :ERROR! I'm not OP on $tchan"
-			return 0
-		}
-
-		if {![isop $nick $tchan]} {
-			putserv "PRIVMSG $chan :ERROR! You need to be OP on $tchan to use this command."
-			return 0
-		}
-
-		if {$target eq ""} {
-			putserv "PRIVMSG $chan :ERROR! Syntax: [::cban::getBanTriga]tban \[#chan\] <nick>"
-			return 0
-		}
-		
-		if {![onchan $target $tchan]} {
-			putserv "PRIVMSG $chan :ERROR! $target needs to be on $tchan"
-			return 0
-		}
+		if { ! [rights $chan $nick $tchan $target] } { return }
 		
 		if {($target eq $botnick && $tchan eq $chan)} {
 			putkick $tchan $nick [format $revengeBan $nick]
@@ -275,7 +258,7 @@ namespace eval cban {
 		pushmode $tchan +b $banmask
 		newchanban "$tchan" "$banmask" "$nick" "$banReason" $::cban::banDuration
 		putserv "PRIVMSG $chan :Temporarily banned $banmask on $tchan"
-		return 0
+		return 1
 	}
 	
 	# @addban
@@ -283,41 +266,22 @@ namespace eval cban {
 		global botname
 		variable revengeBan
 		variable banReason
-		variable tchan "[lindex [split $text] 0]"
+		set tchan 			[lindex [split $text] 0]
 		
 		if {![matchstr "#*" $tchan]} {
-			variable tchan "$chan"
-			variable banmask "[lindex [split $text] 0]"
+			set tchan 		"$chan"
+			set banmask 	[lindex [split $text] 0]
 		} else {
-			variable banmask "[lindex [split $text] 1]"
+			set banmask		[lindex [split $text] 1]
 		}
 		
-		
-
-		if {![isidentified $nick]} {
-			putserv "PRIVMSG $chan :ERROR! You need to be identified to use this command."
-			return 0
-		}
-		
-		if {![botonchan $tchan] || [channel get $chan inactive]} {
-			putserv "PRIVMSG $chan :ERROR! I'm not on $tchan or $tchan is set as inactive."
-			return 0
-		}
-		
-		if {![botisop $tchan]} {
-			putserv "PRIVMSG $chan :ERROR! I'm not OP on $tchan"
-			return 0
-		}
-		
-		if {![isop $nick $tchan]} {
-			putserv "PRIVMSG $chan :ERROR! You need to have at least OP to use this command."
-			return 0
-			}
 		
 		if {$banmask eq ""} {
 			putserv "PRIVMSG $chan :ERROR! Syntax: [::cban::getBanTriga]addban \[#chan\] <mask>"
 			return 0
-		}
+		}^
+
+		if { ! [rights $chan $nick $tchan $target] } { return }
 
 		if {$banmask eq "*!*@*"} {
 			putserv "PRIVMSG $chan :ERROR! That mask is too broad and therefore is denied"
@@ -335,7 +299,7 @@ namespace eval cban {
 		pushmode $tchan +b $banmask
 		newchanban "$tchan" "$banmask" "$nick" "$banReason" 0
 		putserv "PRIVMSG $chan :Added $banmask to $tchan ban list."
-		return 0
+		return 1
 	}
 	
 	# @kick
@@ -343,39 +307,20 @@ namespace eval cban {
 		global botnick
 		variable kickReason
 		variable revengeKick
-		variable tchan "[lindex [split $text] 0]"
+		set tchan 			[lindex [split $text] 0]
 		
 		if {![matchstr "#*" $tchan]} {
-			variable tchan "$chan"
-			variable target "[lindex [split $text] 0]"
+			set tchan 		$chan
+			set target 		[lindex [split $text] 0]
 		} else {
-			variable target "[lindex [split $text] 1]"
-		}
-		
-		if {![isidentified $nick]} {
-			putserv "PRIVMSG $chan :ERROR! You need to be identified to use this command."
-			return 0
-		}
-		
-		if {![botonchan $tchan] || [channel get $tchan inactive]} {
-			putserv "PRIVMSG $chan :ERROR! I'm not on $tchan or $tchan is set as inactive."
-			return 0
-		}
-		
-		if {![botisop $tchan]} {
-			putserv "PRIVMSG $chan :ERROR! I'm not OP on $tchan"
-			return 0
-		}
-		
-		if {![isop $nick $tchan]} {
-			putserv "PRIVMSG $chan :ERROR! You need to be OP on $tchan to use this command."
-			return 0
+			set target 		[lindex [split $text] 1]
 		}
 		
 		if {$target eq ""} {
 			putserv "PRIVMSG $chan :ERROR! Syntax: [::cban::getBanTriga]kick \[#chan\] <nick>"
 			return 0
 		}
+		if { ! [rights $chan $nick $tchan $target] } { return }
 		
 		if {($target eq $botnick && $tchan eq $chan)} {
 			putkick $tchan $nick [format $revengeKick $nick]
@@ -386,45 +331,27 @@ namespace eval cban {
 		}
 		
 		putkick $tchan $target $kickReason
-		return 0
+		return 1
 	}
 	
 	# @uncban
 	proc uncban:pub {nick uhost hand chan text} {
 		
-		variable tchan "[lindex [split $text] 0]"
+		set tchan "[lindex [split $text] 0]"
 		
 		if {![matchstr "#*" $tchan]} {
-			variable tchan "$chan"
-			variable unbanmask "[lindex [split $text] 0]"
+			set tchan "$chan"
+			set unbanmask "[lindex [split $text] 0]"
 		} else {
-			variable unbanmask "[lindex [split $text] 1]"
+			set unbanmask "[lindex [split $text] 1]"
 		}
 
-		if {![isidentified $nick]} {
-			putserv "PRIVMSG $chan :ERROR! You need to be identified to use this command."
-			return 0
-		}
-		
-		if {![botonchan $tchan] || [channel get $tchan inactive]} {
-			putserv "PRIVMSG $chan :ERROR! I'm not on $tchan or $tchan is set as inactive."
-			return 0
-		}
-		
-		if {![botisop $tchan]} {
-			putserv "PRIVMSG $chan :ERROR! I'm not OP on $tchan"
-			return 0
-		}
-
-		if {![isop $nick $tchan]} {
-			putserv "PRIVMSG $chan :ERROR! You need to be OP on $tchan to use this command."
-			return 0
-			}
-		
 		if {$unbanmask eq ""} {
 			putserv "PRIVMSG $chan :ERROR! Syntax: [::cban::getBanTriga]uncban \[#chan\] <mask>. Use [::cban::getBanTriga]bans \[#chan\]to see the channel ban list."
 			return 0
 		}
+
+		if { ! [rights $chan $nick $tchan $target] } { return }
 
 		if {![isban $unbanmask $tchan]} {
 			putserv "PRIVMSG $chan :ERROR! $unbanmask does not exist in my database."
@@ -434,16 +361,16 @@ namespace eval cban {
 		killchanban "$tchan" "$unbanmask"
 		pushmode $tchan -b $unbanmask
 		putserv "PRIVMSG $chan :$unbanmask removed from the ban list for $tchan"
-		return 0
+		return 1
 	}
 	
 	# @bans
 	proc bans:pub {nick uhost hand chan text} {
 		
-		variable tchan "[lindex [split $text] 0]"
+		set tchan "[lindex [split $text] 0]"
 		
 		if {![matchstr "#*" $tchan]} {
-			variable tchan "$chan"
+			set tchan "$chan"
 		}
 
 		if {![isidentified $nick]} {
@@ -469,11 +396,10 @@ namespace eval cban {
 		putquick "PRIVMSG $chan :BANLIST for $tchan sent to $nick"
 
 		foreach botban [banlist $tchan] {
-			variable banmask "[lindex [split $botban] 0]"
-			variable creator "[lindex [split $botban] end]"
-			putserv "PRIVMSG $nick :\002BanMask:\002 $banmask - \002Creator:\002 $creator"
+			set msg [format "\002BanMask:\002 %s - \002Creator:\002 %s" [lindex [split $botban] 0] [lindex [split $botban] end]]
+			putserv "PRIVMSG $nick :$msg"
 		}
-		return 0
+		return 1
 	}
 	
 	##########
@@ -485,46 +411,13 @@ namespace eval cban {
 		global botnick
 		variable revengeBan
 		variable banReason
-		variable chan "[lindex [split $text] 0]"
-		variable target "[lindex [split $text] 1]"
-		variable bantype "[channel get $chan ban-type]"
-		variable banmask "[maskhost ${target}![getchanhost $target $chan] $bantype]"
+		set chan 			[lindex [split $text] 0]
+		set target 			[lindex [split $text] 1]
+		set bantype 		[channel get $chan ban-type]
+		set banmask 		[maskhost ${target}![getchanhost $target $chan] $bantype]
 		
-		if {![isidentified $nick]} {
-			putserv "PRIVMSG $nick :You need to be identified to use this command."
-			return 0
-		}
-		
-		if {![matchstr "#*" $chan]} {
-			putserv "PRIVMSG $nick :ERROR! Syntax: cban <#chan> <nick>"
-			return 0
-		}
-		
-		if {![botonchan $chan] || [channel get $chan inactive]} {
-			putserv "PRIVMSG $nick :ERROR! I'm not on $chan or $chan is set as inactive."
-			return 0
-		}
-		
-		if {![botisop $chan]} {
-			putserv "PRIVMSG $nick :ERROR! I'm not OP on $chan"
-			return 0
-		}
-		
-		if {![isop $nick $chan]} {
-			putserv "PRIVMSG $nick :ERROR! You need to be OP on $chan to use this command"
-			return 0
-		}
-		
-		if {$target eq ""} {
-			putserv "PRIVMSG $nick :ERROR! Syntax: cban <#chan> <nick>"
-			return 0
-		}
-		
-		if {![onchan $target $chan]} {
-			putserv "PRIVMSG $nick :ERROR! $target needs to be on $chan"
-			return 0
-		}
-		
+		if { ! [rights $chan $nick $tchan $target] } { return }
+
 		if {$target eq $botnick} {
 			putkick $chan $nick [format $revengeBan $nick]
 			return 0
@@ -534,7 +427,7 @@ namespace eval cban {
 		pushmode $chan +b $banmask
 		newchanban "$chan" "$banmask" "$nick" "$banReason" 0
 		putserv "PRIVMSG $nick :$banmask added to $chan ban list.ac"
-		return 0
+		return 1
 	}
 	
 	# tban
@@ -543,45 +436,12 @@ namespace eval cban {
 		variable banReason
 		variable revengeBan
 		variable banDuration
-		variable chan "[lindex [split $text] 0]"
-		variable target "[lindex [split $text] 1]"
-		variable bantype "[channel get $chan ban-type]"
-		variable banmask "[maskhost ${target}![getchanhost $target $chan] $bantype]"
+		set chan 			[lindex [split $text] 0]
+		set target 			[lindex [split $text] 1]
+		set bantype 		[channel get $chan ban-type]
+		set banmask 		[maskhost ${target}![getchanhost $target $chan] $bantype]
 		
-		if {![isidentified $nick]} {
-			putserv "PRIVMSG $nick :ERROR! You need to be identified to use this command."
-			return 0
-		}
-		
-		if {![matchstr "#*" $chan]} {
-			putserv "PRIVMSG $nick :ERROR! Syntax: tban <#chan> <nick>"
-			return 0
-		}
-		
-		if {![botonchan $chan] || [channel get $chan inactive]} {
-			putserv "PRIVMSG $nick :ERROR! I'm not on $chan or $chan is set as inactive."
-			return 0
-		}
-		
-		if {![botisop $chan]} {
-			putserv "PRIVMSG $nick :ERROR! I'm not OP on $chan"
-			return 0
-		}
-		
-		if {![isop $nick $chan]} {
-			putserv "PRIVMSG $nick :ERROR! You need to be OP on $chan to use this command"
-			return 0
-		}
-		
-		if {$target eq ""} {
-			putserv "PRIVMSG $nick :ERROR! Syntax: tban <#chan> <nick>"
-			return 0
-		}
-		
-		if {![onchan $target $chan]} {
-			putserv "PRIVMSG $nick :ERROR! $target needs to be on $chan"
-			return 0
-		}
+		if { ! [rights $chan $nick $tchan $target] } { return }
 		
 		if {$target eq $botnick} {
 			putkick $chan $nick [format $revengeBan $nick]
@@ -592,7 +452,7 @@ namespace eval cban {
 		pushmode $chan +b $banmask
 		newchanban "$chan" "$banmask" "$nick" "$banReason" $banDuration
 		putserv "PRIVMSG $nick :Added $banmask to $chan ban list."
-		return 0
+		return 1
 	}
 	
 	# addban
@@ -600,38 +460,14 @@ namespace eval cban {
 		global botname
 		variable banReason
 		variable revengeBan
-		variable chan "[lindex [split $text] 0]"
-		variable banmask "[lindex [split $text] 1]"
-		
-		if {![isidentified $nick]} {
-			putserv "PRIVMSG $nick :ERROR! Ypu need to be identified to use this command."
-			return 0
-		}
-		
-		if {![matchstr "#*" $chan]} {
-			putserv "PRIVMSG $nick :ERROR! Syntax: addban <#chan> <banmask>"
-			return 0
-		}
-		
-		if {![botonchan $chan] || [channel get $chan inactive]} {
-			putserv "PRIVMSG $nick :ERROR! I'm not on $chan or $chan is set as inactive."
-			return 0
-		}
-		
-		if {![isop $nick $chan]} {
-			putserv "PRIVMSG $nick :ERROR! You need to be OP on $chan to use this command."
-			return 0
-		}
-		
-		if {![botisop $chan]} {
-			putserv "PRIVMSG $nick :ERROR! I'm not OP on $chan"
-			return 0
-		}
+		set chan 			[lindex [split $text] 0]
+		set banmask 		[lindex [split $text] 1]
 		
 		if {$banmask eq ""} {
 			putserv "PRIVMSG $nick :ERROR! Syntax: addban <#chan> <banmask>"
 			return 0
 		}
+		if { ! [rights $chan $nick $tchan $target] } { return }
 		
 		if {$banmask eq "*!*@*"} {
 			putserv "PRIVMSG $nick :ERROR! That mask is too broad and therefore is denied"
@@ -646,7 +482,7 @@ namespace eval cban {
 		pushmode $chan +b $banmask
 		newchanban "$chan" "$banmask" "$nick" "$banReason" 0
 		putserv "PRIVMSG $nick :Added $banmask to $chan ban list."
-		return 0
+		return 1
 	}
 	
 	# kick
@@ -654,33 +490,10 @@ namespace eval cban {
 		variable botnick
 		variable kickReason
 		variable revengeKick
-		variable chan "[lindex [split $text] 0]"
-		variable target "[lindex [split $text] 1]"
+		set chan 			[lindex [split $text] 0]
+		set target 			[lindex [split $text] 1]
 		
-		if {![isidentified $nick]} {
-			putserv "PRIVMSG $nick :ERROR! You need to be identified to use this command."
-			return 0
-		}
-		
-		if {![matchstr "#*" $chan]} {
-			putserv "PRIVMSG $nick :ERROR! Syntax: kick <#chan> <nick>"
-			return 0
-		}
-		
-		if {![botonchan $chan] || [channel get $chan inactive]} {
-			putserv "PRIVMSG $nick :ERROR! I'm not on $chan or $chan is set as inactive."
-			return 0
-		}
-		
-		if {![isop $nick $chan]} {
-			putserv "PRIVMSG $nick :ERROR! You need to be OP on $chan to use this command."
-			return 0
-		}
-		
-		if {![botisop $chan]} {
-			putserv "PRIVMSG $nick :ERROR! I'm not OP on $chan"
-			return 0
-		}
+		if { ! [rights $chan $nick $tchan $target] } { return }
 		
 		if {$target eq ""} {
 			putserv "PRIVMSG $nick :ERROR! Syntax: kick <#chan> <nick>"
@@ -693,43 +506,19 @@ namespace eval cban {
 		}
 		
 		putkick $chan $target $kickReason
-		return 0
+		return 1
 	}
 	
 	# uncban
 	proc uncban:msg {nick uhost hand text} {
-		variable chan "[lindex [split $text] 0]"
-		variable unbanmask "[lindex [split $text] 1]"
-		
-		if {![isidentified $nick]} {
-			putserv "PRIVMSG $nick :ERROR! You must be identified to use this command."
-			return 0
-		}
-		
-		if {![matchstr "#*" $chan]} {
-			putserv "PRIVMSG $nick :ERROR! Syntax: uncban <#chan> <banmask>"
-			return 0
-		}
-		
-		if {![botonchan $chan] || [channel get $chan inactive]} {
-			putserv "PRIVMSG $nick :ERROR! I'm not or $chan or $chan is set as inactive."
-			return 0
-		}
-		
-		if {![isop $nick $chan]} {
-			putserv "PRIVMSG $nick :ERROR! You need to be OP on $chan to use this command."
-			return 0
-		}
-		
-		if {![botisop $chan]} {
-			putserv "PRIVMSG $nick :ERROR! I'm not OP on $chan"
-			return 0
-		}
+		set chan 			[lindex [split $text] 0]
+		set unbanmask 		[lindex [split $text] 1]
 		
 		if {$unbanmask eq ""} {
 			putserv "PRIVMSG $nick :ERROR! Syntax: uncban <unbanmask>. Type: bans <#chan> to see the ban list."
 			return 0
 		}
+		if { ! [rights $chan $nick $tchan $target] } { return }
 		
 		if {![isban $unbanmask $chan]} {
 			putserv "PRIVMSG $nick :ERROR! $unbanmask doesn't exist on my database."
@@ -739,32 +528,14 @@ namespace eval cban {
 		killchanban "$chan" "$unbanmask"
 		pushmode $chan -b $unbanmask
 		putserv "PRIVMSG $nick :Removed $unbanmask from $chan ban list."
-		return 0
+		return 1
 	}
 	
 	# bans
 	proc bans:msg {nick uhost hand text} {
-		variable chan "[lindex [split $text] 0]"
+		set chan 	[lindex [split $text] 0]
 		
-		if {![isidentified $nick]} {
-			putserv "PRIVMSG $nick :ERROR! You need to be identified to use this command."
-			return 0
-		}
-		
-		if {![matchstr "#*" $chan]} {
-			putserv "PRIVMSG $nick :ERROR! Syntax: bans <#chan>"
-			return 0
-		}
-		
-		if {![botonchan $chan] || [channel get $chan inactive]} {
-			putserv "PRIVMSG $nick :ERROR! I'm not on $chan or $chan is set as inactive."
-			return 0
-		}
-		
-		if {![isop $nick $chan]} {
-			putserv "PRIVMSG $nick :ERROR! You need to be OP on $chan to use this command"
-			return 0
-		}
+		if { ! [rights $chan $nick $tchan $target] } { return }
 		
 		if {[banlist $chan] eq ""} {
 			putserv "PRIVMSG $nick :ERROR! There are no bans on $chan"
@@ -772,12 +543,12 @@ namespace eval cban {
 		}
 		
 		foreach botban [banlist $chan] {
-			variable banmask "[lindex [split $botban] 0]"
-			variable creator "[lindex [split $botban] end]"
+			set banmask "[lindex [split $botban] 0]"
+			set creator "[lindex [split $botban] end]"
 			putserv "PRIVMSG $nick :\002BanMask:\002 $banmask - \002Added by:\002 $creator"
 		}
-		return 0
+		return 1
 	}		
 			
-	putlog "-= CBan v2.4 Loaded =-"
+	putlog "-= CBan v2.5 Loaded =-"
 };
