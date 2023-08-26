@@ -99,7 +99,7 @@ proc addaop:pub {nick uhost hand chan text} {
 	adduser $target $mask
 	chattr $target |+o $chan
 	putquick "MODE $chan +o $target"
-	putquick "NOTICE $nick :Added $target ($mask) to the AOP List for $chan"
+	putquick "PRIVMSG $chan :Added $target ($mask) to the AOP List for $chan"
 	putquick "NOTICE $target :$nick ($hand) has added you to the AOP List for $chan"
 	return 0
 }
@@ -140,7 +140,7 @@ proc delaop:pub {nick uhost hand chan text} {
 		}
 	}
 	
-	putquick "NOTICE $nick :Deleted $target from the AOP List for $chan"
+	putquick "PRIVMSG $chan :Deleted $target from the AOP List for $chan"
 	putquick "NOTICE $target :$nick ($hand) has deleted you from the AOP List for $chan"
 }
 
@@ -174,7 +174,7 @@ proc addhop:pub {nick uhost hand chan text} {
 	adduser $target $mask
 	chattr $target |+l $chan
 	putquick "MODE $chan +h $target"
-	putquick "NOTICE $nick :Added $target ($mask) to the HOP List for $chan"
+	putquick "PRIVMSG $chan :Added $target ($mask) to the HOP List for $chan"
 	putquick "NOTICE $target :$nick ($hand) has added you to the HOP List for $chan"
 }
 
@@ -214,7 +214,7 @@ proc delhop:pub {nick uhost hand chan text} {
 		}
 	}
 	
-	putquick "NOTICE $nick :Deleted $target from the HOP List for $chan"
+	putquick "PRIVMSG $chan :Deleted $target from the HOP List for $chan"
 	putquick "NOTICE $target :$nick ($hand) has deleted you from the HOP List for $chan"
 }
 
@@ -230,7 +230,7 @@ proc addvop:pub {nick uhost hand chan text} {
 	}
 	
 	if {$target eq ""} {
-		putquick "PRIVMSG $chan :\037ERROR\037: Incorrect Parameters. \037SYNTAX\037: [addTrigger]addaov nickname"
+		putquick "PRIVMSG $chan :\037ERROR\037: Incorrect Parameters. \037SYNTAX\037: [addTrigger]addvop nickname"
 		return
 	}
 	
@@ -248,7 +248,7 @@ proc addvop:pub {nick uhost hand chan text} {
 	adduser $target $mask
 	chattr $target |+v $chan
 	putquick "MODE $chan +v $target"
-	putquick "NOTICE $nick :Added $target ($mask) to the VOP List for $chan"
+	putquick "PRIVMSG $chan :Added $target ($mask) to the VOP List for $chan"
 	putquick "NOTICE $target :$nick ($hand) has added you to the VOP List for $chan"
 }
 
@@ -261,7 +261,7 @@ proc delvop:pub {nick uhost hand chan text} {
 	}
 	
 	if {$target eq ""} {
-		putquick "PRIVMSG $chan :\037ERROR\037: Incorrect Parameters. \037SYNTAX\037: [addTrigger]delaov nickname"
+		putquick "PRIVMSG $chan :\037ERROR\037: Incorrect Parameters. \037SYNTAX\037: [addTrigger]delvop nickname"
 		return 0
 	}
 	
@@ -288,7 +288,7 @@ proc delvop:pub {nick uhost hand chan text} {
 		}
 	}
 	
-	putquick "NOTICE $nick :Deleted $target from the VOP List for $chan"
+	putquick "PRIVMSG $chan :Deleted $target from the VOP List for $chan"
 	putquick "NOTICE $target :$nick ($hand) has deleted you from the VOP List for $chan"
 }
 
@@ -337,12 +337,12 @@ proc jmode:msg {nick uhost hand text} {
 	}
 	
 	if {![matchstr "#*" $chan]} {
-		putquick "NOTICE $nick :\037ERROR\037: Incorrect Parameters. \037SYNTAX\037: /msg $botnick joinmodes #channel on|off"
+		putquick "PRIVMSG $nick :\037ERROR\037: Incorrect Parameters. \037SYNTAX\037: /msg $botnick joinmodes #channel on|off"
 		return
 	}
 	
 	if {$option eq ""} {
-		putquick "NOTICE $nick :\037ERROR\037: Incorrect Parameters. \037SYNTAX\037: /msg $botnick joinmodes #channel on|off"
+		putquick "PRIVMSG $nick :\037ERROR\037: Incorrect Parameters. \037SYNTAX\037: /msg $botnick joinmodes #channel on|off"
 		return
 	}
 	
