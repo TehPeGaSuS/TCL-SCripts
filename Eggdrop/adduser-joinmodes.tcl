@@ -6,12 +6,12 @@
 ##########
 # ----- ADDING USERS ----- (Basic User adding)
 # Commands are:
-# !addaop nickname
-# !delaop nickname
-# !addhop nickname
-# !delhop nickname
-# !addaov nickname
-# !delaov nickname
+# !addaop nickname - Adds <nickname> to the bot OP list for the channel
+# !delaop nickname - Removes <nickname> from the bot OP list for the channel
+# !addhop nickname - Adds <nickname> to the bot HALFOP list for the channel
+# !delhop nickname - Removes <nickname> from the bot HALFOP list for the channel
+# !addaov nickname - Adds <nickname> to the bot VOICE list for the channel
+# !delaov nickname - Removes <nickname> from the bot VOICE list for the channel
 ##########
 # ----- JoinModes ----- (This enforces joinmodes @/+)
 # JoinModes Public Commands:
@@ -39,7 +39,7 @@ set addusertrig "@"
 #	7	nick!*@host
 #	8	nick!*user@*.host
 #	9	nick!*@*.host
-set masktype "3"
+set cmasktype "3"
 
 # You don't need to edit the access flags. They are added like this because each command requires different access.
 # This is to ensure that user's can't add/del those with more access. If you wish to edit them, edit the proc directly.
@@ -61,75 +61,83 @@ proc addTrigger {} {
 bind join - * join:modes
 bind pub - ${addusertrig}addaop addaop:pub
 bind pub - ${addusertrig}delaop delaop:pub
-bind pub - ${addusertrig}addhop addhop:oub
+bind pub - ${addusertrig}addhop addhop:pub
 bind pub - ${addusertrig}delhop delhop:pub
-bind pub - ${addusertrig}addaov addaov:pub
-bind pub - ${addusertrig}delaov delaov:pub
+bind pub - ${addusertrig}addvop addvop:pub
+bind pub - ${addusertrig}delvop delvop:pub
 bind pub - ${addusertrig}joinmodes jmode:pub
 bind msg - joinmodes jmode:msg
 
 
 proc addaop:pub {nick uhost hand chan text} {
-	global masktype
-	
-	if {![matchattr [nick2hand $nick] m]} {
-		return
-	}
-	
+	global cmasktype
+		
 	set target [lindex [split $text] 0]
+	set mask "[maskhost ${target}![getchanhost $target $chan] $cmasktype]"
+	
+	if {![matchattr [nick2hand $nick] mn]} {
+		putserv "PRIVMSG $chan :Sorry ${nick}, but you don't have access!"
+		return 0
+	}
 	
 	if {$target eq ""} {
-		putquick "PRIVMSG $chan :\037ERROR\037: Incorrect Parameters. \037SYNTAX\037: [addTrigger]addaop nickname"
-		return
-	}
-	
-	if {[validuser [nick2hand $target]]} {
-		putquick "PRIVMSG $chan :\037ERROR\037: $target is already a valid user."
-		return
+		putquick "PRIVMSG $chan :\037ERROR\037: Incorrect Parameters. \037SYNTAX\037: [addTrigger]addaop <nickname>"
+		return 0
 	}
 	
 	if {![onchan $target $chan]} {
 		putquick "PRIVMSG $chan :\037ERROR\037: $target is not even on $chan ..."
-		return
+		return 0
 	}
 	
-	set mask "[maskhost ${target}![getchanhost $target $chan] $masktype]"
-	
-	if {[onchan $target $chan] && ![isop $target $chan]} {
+	if {[validuser [nick2hand $target]] && ![matchattr [nick2hand $target] |o $chan]} {
+		chattr $target |+o $chan
 		putquick "MODE $chan +o $target"
+		return 0
 	}
 	
 	adduser $target $mask
 	chattr $target |+o $chan
+	putquick "MODE $chan +o $target"
 	putquick "NOTICE $nick :Added $target ($mask) to the AOP List for $chan"
 	putquick "NOTICE $target :$nick ($hand) has added you to the AOP List for $chan"
+	return 0
 }
 
 proc delaop:pub {nick uhost hand chan text} {
-	if {![matchattr [nick2hand $nick] m]} {
-		return
-	}
-	
 	set target [lindex [split $text] 0]
+	
+	if {![matchattr [nick2hand $nick] mn]} {
+		putserv "PRIVMSG $chan :Sorry ${nick}, but you don't have access!"
+		return 0
+	}
 	
 	if {$target eq ""} {
 		putquick "PRIVMSG $chan :\037ERROR\037: Incorrect Parameters. \037SYNTAX\037: [addTrigger]delaop nickname"
-		return
+		return 0
 	}
 	
 	if {![validuser [nick2hand $target]]} {
 		putquick "PRIVMSG $chan :\037ERROR\037: $target is not a valid user."
-		return
+		return 0
 	}
 	
-	if {[onchan $target $chan] && [isop $target $chan]} {
-		putquick "MODE $chan -o $target"
+	set found 0
+	
+	foreach chans [channels] {
+		if {[matchattr [nick2hand $target] |ovl $chans]} {
+			set found 1
+		}
 	}
 	
-	if {![matchattr [nick2hand $target] m]} {
-		deluser $target
-	} else {
-		chattr $target |-o $chan
+	if {$found} {
+		if {![matchattr [nick2hand $target] mn]} {
+			deluser $target
+			putquick "MODE $chan -o $target"
+		} else {
+			chattr $target |-o $chan
+			putquick "MODE $chan -o $target"
+		}
 	}
 	
 	putquick "NOTICE $nick :Deleted $target from the AOP List for $chan"
@@ -137,21 +145,18 @@ proc delaop:pub {nick uhost hand chan text} {
 }
 
 proc addhop:pub {nick uhost hand chan text} {
-	global masktype
-	
-	if {![matchattr [nick2hand $nick] m]} {
-		return
-	}
+	global cmasktype
 	
 	set target [lindex [split $text] 0]
+	set mask "[maskhost ${target}![getchanhost $target $chan] $cmasktype]"
+	
+	if {![matchattr [nick2hand $nick] mn]} {
+		putserv "PRIVMSG $chan :Sorry ${nick}, but you don't have access!"
+		return 0
+	}
 	
 	if {$target eq ""} {
 		putquick "PRIVMSG $chan :\037ERROR\037: Incorrect Parameters. \037SYNTAX\037: [addTrigger]addhop nickname"
-		return
-	}
-	
-	if {[validuser [nick2hand $target]]} {
-		putquick "PRIVMSG $chan :\037ERROR\037: $target is already a valid user."
 		return
 	}
 	
@@ -160,109 +165,131 @@ proc addhop:pub {nick uhost hand chan text} {
 		return
 	}
 	
-	set mask "[maskhost ${target}![getchanhost $target $chan] $masktype]"
-	
-	if {[onchan $target $chan] && ![isop $target $chan]} {
+	if {[validuser [nick2hand $target]] && ![matchattr [nick2hand $target] |l $chan]} {
+		chattr $target |+l $chan
 		putquick "MODE $chan +h $target"
+		return 0
 	}
 	
 	adduser $target $mask
 	chattr $target |+l $chan
+	putquick "MODE $chan +h $target"
 	putquick "NOTICE $nick :Added $target ($mask) to the HOP List for $chan"
 	putquick "NOTICE $target :$nick ($hand) has added you to the HOP List for $chan"
 }
 
 proc delhop:pub {nick uhost hand chan text} {
-	if {![matchattr [nick2hand $nick] m]} {
-		return
-	}
-	
 	set target [lindex [split $text] 0]
+	
+	if {![matchattr [nick2hand $nick] mn]} {
+		putserv "PRIVMSG $chan :Sorry ${nick}, but you don't have access!"
+		return 0
+	}
 	
 	if {$target eq ""} {
 		putquick "PRIVMSG $chan :\037ERROR\037: Incorrect Parameters. \037SYNTAX\037: [addTrigger]delhop nickname"
-		return
+		return 0
 	}
 	
 	if {![validuser [nick2hand $target]]} {
 		putquick "PRIVMSG $chan :\037ERROR\037: $target is not a valid user."
-		return
+		return 0
 	}
 	
-	if {[onchan $target $chan] && [isop $target $chan]} {
-		putquick "MODE $chan -h $target"
+	set found 0
+	
+	foreach chans [channels] {
+		if {[matchattr [nick2hand $target] |ovl $chans]} {
+			set found 1
+		}
 	}
 	
-	if {![matchattr [nick2hand $target] m]} {
-		deluser $target
-	} else {
-		chattr $target |-l $chan
+	if {$found} {
+		if {![matchattr [nick2hand $target] mn]} {
+			deluser $target
+			putquick "MODE $chan -h $target"
+		} else {
+			chattr $target |-l $chan
+			putquick "MODE $chan -h $target"
+		}
 	}
 	
 	putquick "NOTICE $nick :Deleted $target from the HOP List for $chan"
 	putquick "NOTICE $target :$nick ($hand) has deleted you from the HOP List for $chan"
 }
 
-proc addaov:pub {nick uhost hand chan text} {
-	global masktype
-	
-	if {![matchattr [nick2hand $nick] m|o $chan]} {
-		return
-	}
+proc addvop:pub {nick uhost hand chan text} {
+	global cmasktype
 	
 	set target [lindex [split $text] 0]
+	set mask "[maskhost ${target}![getchanhost $target $chan] $cmasktype]"
+	
+	if {![matchattr [nick2hand $nick] mn]} {
+		putserv "PRIVMSG $chan :Sorry ${nick}, but you don't have access!"
+		return 0
+	}
 	
 	if {$target eq ""} {
 		putquick "PRIVMSG $chan :\037ERROR\037: Incorrect Parameters. \037SYNTAX\037: [addTrigger]addaov nickname"
 		return
 	}
 	
-	if {[validuser [nick2hand $target]]} {
-		putquick "PRIVMSG $chan :\037ERROR\037: $target is already a valid user."
+	if {![onchan $target $chan]} {
+		putquick "PRIVMSG $chan :\037ERROR\037: $target is not even on $chan ..."
 		return
 	}
 	
-	set mask "[maskhost ${target}![getchanhost $target $chan] $masktype]"
-	
-	if {[onchan $target $chan] && ![isvoice $target $chan]} {
+	if {[validuser [nick2hand $target]] && ![matchattr [nick2hand $target] |v $chan]} {
+		chattr $target |+v $chan
 		putquick "MODE $chan +v $target"
+		return 0
 	}
 	
 	adduser $target $mask
 	chattr $target |+v $chan
-	putquick "NOTICE $nick :Added $target ($mask) to the AOV List for $chan"
-	putquick "NOTICE $target :$nick ($hand) has added you to the AOV List for $chan"
+	putquick "MODE $chan +v $target"
+	putquick "NOTICE $nick :Added $target ($mask) to the VOP List for $chan"
+	putquick "NOTICE $target :$nick ($hand) has added you to the VOP List for $chan"
 }
 
-proc delaov:pub {nick uhost hand chan text} {
-	if {![matchattr [nick2hand $nick] m|o $chan]} {
-		return
-	}
-	
+proc delvop:pub {nick uhost hand chan text} {
 	set target [lindex [split $text] 0]
+	
+	if {![matchattr [nick2hand $nick] mn]} {
+		putserv "PRIVMSG $chan :Sorry ${nick}, but you don't have access!"
+		return 0
+	}
 	
 	if {$target eq ""} {
 		putquick "PRIVMSG $chan :\037ERROR\037: Incorrect Parameters. \037SYNTAX\037: [addTrigger]delaov nickname"
-		return
+		return 0
 	}
 	
 	if {![validuser [nick2hand $target]]} {
 		putquick "PRIVMSG $chan :\037ERROR\037: $target is not a valid user."
-		return
+		return 0
 	}
 	
-	if {[onchan $target $chan] && [isvoice $target $chan]} {
-		putquick "MODE $chan -v $target"
+	set found 0
+	
+	foreach chans [channels] {
+		if {[matchattr [nick2hand $target] |ovl $chans]} {
+			set found 1
+		}
 	}
 	
-	if {![matchattr [nick2hand $target] m]} {
-		deluser $target
-	} else {
-		chattr $target |-v $chan
+	if {$found} {
+		if {![matchattr [nick2hand $target] mn]} {
+			deluser $target
+			putquick "MODE $chan -v $target"
+		} else {
+			chattr $target |-v $chan
+			putquick "MODE $chan -v $target"
+		}
 	}
 	
-	putquick "NOTICE $nick :Deleted $target from the AOV List for $chan"
-	putquick "NOTICE $target :$nick ($hand) has deleted you from the AOV List for $chan"
+	putquick "NOTICE $nick :Deleted $target from the VOP List for $chan"
+	putquick "NOTICE $target :$nick ($hand) has deleted you from the VOP List for $chan"
 }
 
 proc jmode:pub {nick uhost hand chan text} {
@@ -345,6 +372,11 @@ proc join:modes {nick uhost hand chan} {
 		if {([channel get $chan joinmode] && [botisop $chan])} {
 			if {[matchattr [nick2hand $nick] |o $chan]} {
 				putquick "MODE $chan +o $nick"
+				return 0
+			}
+			
+			if {[matchattr [nick2hand $nick] |l $chan]} {
+				putquick "MODE $chan +h $nick"
 				return 0
 			}
 			
