@@ -2,12 +2,14 @@
 # adduser-joinmodes.tcl v1.0 (11/11/2021)
 # Based on ist0k original script (https://github.com/ist0k/eggdrop-TCL/blob/master/adduser-joinmodes.tcl)
 ##########
-# Last update: 26/11/2021
+# Last update: 26/08/2023
 ##########
 # ----- ADDING USERS ----- (Basic User adding)
 # Commands are:
 # !addaop nickname
 # !delaop nickname
+# !addhop nickname
+# !delhop nickname
 # !addaov nickname
 # !delaov nickname
 ##########
@@ -59,6 +61,8 @@ proc addTrigger {} {
 bind join - * join:modes
 bind pub - ${addusertrig}addaop addaop:pub
 bind pub - ${addusertrig}delaop delaop:pub
+bind pub - ${addusertrig}addhop addhop:oub
+bind pub - ${addusertrig}delhop delhop:pub
 bind pub - ${addusertrig}addaov addaov:pub
 bind pub - ${addusertrig}delaov delaov:pub
 bind pub - ${addusertrig}joinmodes jmode:pub
@@ -96,7 +100,7 @@ proc addaop:pub {nick uhost hand chan text} {
 	}
 	
 	adduser $target $mask
-	chattr $target -|+o $chan
+	chattr $target |+o $chan
 	putquick "NOTICE $nick :Added $target ($mask) to the AOP List for $chan"
 	putquick "NOTICE $target :$nick ($hand) has added you to the AOP List for $chan"
 }
@@ -125,11 +129,78 @@ proc delaop:pub {nick uhost hand chan text} {
 	if {![matchattr [nick2hand $target] m]} {
 		deluser $target
 	} else {
-		chattr $target -|-o $chan
+		chattr $target |-o $chan
 	}
 	
 	putquick "NOTICE $nick :Deleted $target from the AOP List for $chan"
 	putquick "NOTICE $target :$nick ($hand) has deleted you from the AOP List for $chan"
+}
+
+proc addhop:pub {nick uhost hand chan text} {
+	global masktype
+	
+	if {![matchattr [nick2hand $nick] m]} {
+		return
+	}
+	
+	set target [lindex [split $text] 0]
+	
+	if {$target eq ""} {
+		putquick "PRIVMSG $chan :\037ERROR\037: Incorrect Parameters. \037SYNTAX\037: [addTrigger]addhop nickname"
+		return
+	}
+	
+	if {[validuser [nick2hand $target]]} {
+		putquick "PRIVMSG $chan :\037ERROR\037: $target is already a valid user."
+		return
+	}
+	
+	if {![onchan $target $chan]} {
+		putquick "PRIVMSG $chan :\037ERROR\037: $target is not even on $chan ..."
+		return
+	}
+	
+	set mask "[maskhost ${target}![getchanhost $target $chan] $masktype]"
+	
+	if {[onchan $target $chan] && ![isop $target $chan]} {
+		putquick "MODE $chan +h $target"
+	}
+	
+	adduser $target $mask
+	chattr $target |+l $chan
+	putquick "NOTICE $nick :Added $target ($mask) to the HOP List for $chan"
+	putquick "NOTICE $target :$nick ($hand) has added you to the HOP List for $chan"
+}
+
+proc delhop:pub {nick uhost hand chan text} {
+	if {![matchattr [nick2hand $nick] m]} {
+		return
+	}
+	
+	set target [lindex [split $text] 0]
+	
+	if {$target eq ""} {
+		putquick "PRIVMSG $chan :\037ERROR\037: Incorrect Parameters. \037SYNTAX\037: [addTrigger]delhop nickname"
+		return
+	}
+	
+	if {![validuser [nick2hand $target]]} {
+		putquick "PRIVMSG $chan :\037ERROR\037: $target is not a valid user."
+		return
+	}
+	
+	if {[onchan $target $chan] && [isop $target $chan]} {
+		putquick "MODE $chan -h $target"
+	}
+	
+	if {![matchattr [nick2hand $target] m]} {
+		deluser $target
+	} else {
+		chattr $target |-l $chan
+	}
+	
+	putquick "NOTICE $nick :Deleted $target from the HOP List for $chan"
+	putquick "NOTICE $target :$nick ($hand) has deleted you from the HOP List for $chan"
 }
 
 proc addaov:pub {nick uhost hand chan text} {
@@ -158,7 +229,7 @@ proc addaov:pub {nick uhost hand chan text} {
 	}
 	
 	adduser $target $mask
-	chattr $target -|+v $chan
+	chattr $target |+v $chan
 	putquick "NOTICE $nick :Added $target ($mask) to the AOV List for $chan"
 	putquick "NOTICE $target :$nick ($hand) has added you to the AOV List for $chan"
 }
@@ -187,7 +258,7 @@ proc delaov:pub {nick uhost hand chan text} {
 	if {![matchattr [nick2hand $target] m]} {
 		deluser $target
 	} else {
-		chattr $target -|-v $chan
+		chattr $target |-v $chan
 	}
 	
 	putquick "NOTICE $nick :Deleted $target from the AOV List for $chan"
@@ -285,4 +356,4 @@ proc join:modes {nick uhost hand chan} {
 	}
 }
 
-putlog ".: AddUSER+JoinMODEs v1.2 by PeGaSuS loaded :."
+putlog ".: AddUSER+JoinMODEs v1.3 by PeGaSuS loaded :."
