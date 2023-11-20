@@ -27,7 +27,7 @@ namespace eval idlerpg {
     proc idleJoin {nick uhost hand chan} {
         if {$chan eq "$::idlerpg::Chan"} {
             if {$nick eq "$::idlerpg::Bot"} {
-                putlog "Sending Login command because bot $::idlerpg::Bot just entered the channel"
+                putlog "Sending LOGIN command because bot $::idlerpg::Bot just entered the channel"
                 putserv "PRIVMSG $nick :LOGIN $::idlerpg::Character $::idlerpg::Password"
                 return 0
             }
