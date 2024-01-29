@@ -15,79 +15,102 @@ namespace eval genclones {
 	#################
 	# CONFIGURATION #
 	#################
-	
-	# Trigger to use with the commands
+
+ 	#----------------------------------#
+	# Trigger to use with the commands #
+ 	#----------------------------------#
 	variable cloneTrigger "!"
-	
-	# IP that will be used by the clones
+
+ 	#------------------------------------#
+	# IP that will be used by the clones #
+ 	#------------------------------------#
 	variable bindhost "2001:4860:4860::8888"
-	
-	# Password for the clones (can be anything)
+
+ 	#-------------------------#
+	# Password for the clones #
+ 	#-------------------------#
 	variable passwd "VeenuLeophah0peiha0ib0ae"
-	
-	# How long should the clones nicknames be?
-	# NOTE: nicks will be nclength+2, so if
-	# `nclength` is set to 12, nicks will be 14 chars long
+
+ 	#------------------------------------------#
+	# How long should the clones nicknames be? #-------------------------------------------------#
+	# NOTE: nicks will be nclength+2, so if `nclength` is set to 12, nicks will be 14 chars long #
+ 	#--------------------------------------------------------------------------------------------#
 	variable nclength "12"
-	
-	# Network name
+
+ 	#--------------#
+	# Network name #
+ 	#--------------#
 	variable netname "example"
-	
-	# IRC hostname
+
+ 	#-------------#
+	# IRC address #
+ 	#-------------#
 	variable irchost "irc.example.org"
-	
-	# IRC port (with "+" before the port number if using SSL/TLS)
+
+ 	#-------------------------------------------------------------#
+	# IRC port (with "+" before the port number if using SSL/TLS) #
+ 	#-------------------------------------------------------------#
 	variable ircport "+6697"
-	
-	# Channel for the clones to join
+
+ 	#--------------------------------#
+	# Channel for the clones to join #
+ 	#--------------------------------#
 	variable chanclone "#CloneX"
-	
-	# List of users that will be protected when deleting all the clones (such as bot admins, ops, etc)
-	# when we use the command "delclones", otherwise even bot owner will be deleted and lose bot access
-	# This users also won't have new channels added/removed to/from them
-	# I strongly advise to keep "-hq"
-	# One nick per line and all lowercase
+
+ 	#---------------------------------------------------------------------------------------------------#
+	# List of users that will be protected when deleting all the clones (such as bot admins, ops, etc)  #
+	# when we use the command "delclones", otherwise even bot owner will be deleted and lose bot access #
+	# This users also won't have new channels added/removed to/from them #------------------------------#
+	# I strongly advise to keep "-hq"     #------------------------------#
+	# One nick per line and all lowercase #
+ 	#-------------------------------------#
 	variable protected {
 		"-hq"
 		"admin1"
 		"admin2"
 	}
 	
-	########################
+	#----------------------#
 	# End of configuration #
-	#                      ##########################################
+	#                      #----------------------------------------#
 	# DON'T TOUCH ANYTHING BELOW UNLESS YOU KNOW WHAT YOU ARE DOING #
-	#                                                               ################################################
+	#                                                               #----------------------------------------------#
 	# If you touch the code below and then complain the script "suddenly stopped working" I'll touch you at night. #
-	################################################################################################################
+	#--------------------------------------------------------------------------------------------------------------#
 	
 	
 	#########
 	# BINDS #
 	#########
-	
-	# Lets check if the bot is connected
+
+ 	#------------------------------------#
+	# Lets check if the bot is connected #
+ 	#------------------------------------#
 	bind pub - ${::genclones::cloneTrigger}clonex ::genclones::status_check
-	
-	# Lets generate X number of clones at once
+
+ 	#------------------------------------------#
+	# Lets generate X number of clones at once #
+ 	#------------------------------------------#
 	bind pub - ${::genclones::cloneTrigger}genclones ::genclones::gen_clones
-	
-	# Lets add a new channel for the clones to join
+
+ 	#-----------------------------------------------#
+	# Lets add a new channel for the clones to join #
+ 	#-----------------------------------------------#
 	bind pub - ${::genclones::cloneTrigger}addchan ::genclones::addchan_clones
-	
-	# Let's remove a channel from the clones
+
+ 	#----------------------------------------#
+	# Let's remove a channel from the clones #
+ 	#----------------------------------------#
 	bind pub - ${::genclones::cloneTrigger}delchan ::genclones::delchan_clones
-		
-	#Lets delete ALL the clones
+
+ 	#----------------------------#
+	# Lets delete ALL the clones #
+ 	#----------------------------#
 	bind pub - ${::genclones::cloneTrigger}delclones ::genclones::del_clones
 	
-	########################
-	# END OF CONFIGURATION #
-	################################################################################################################
-	# If you touch the code below and then complain the script "suddenly stopped working" I'll touch you at night. #
-	################################################################################################################
-	
-	# This is how we get the tigger to be used on messages and inside procs
+	#-----------------------------------------------------------------------#
+ 	# This is how we get the tigger to be used on messages and inside procs #
+  	#-----------------------------------------------------------------------#
 	proc getZncTrigger {} {
 		variable ::genclones::cloneTrigger
 		return $::genclones::cloneTrigger
