@@ -238,5 +238,5 @@ namespace eval genclones {
 	# END OF PROCS #
 	################
 	
-	putlog "::: CloneX v06/05/2023-13:50 Loaded :::"
+	putlog "::: CloneX v29/01/2024-15:41 Loaded :::"
 };
