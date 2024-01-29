@@ -120,7 +120,7 @@ namespace eval genclones {
 		putnow "PRIVMSG $chan :Starting generation of $clonenum clones."
 		while {$i < $clonenum} {
 			incr i
-			create_user $nick $uhost $hand $chan $text
+			::genclones::create_user $nick $uhost $hand $chan $text
 		}
 		putnow "PRIVMSG $chan :Generated $i clones."
 		return 0
