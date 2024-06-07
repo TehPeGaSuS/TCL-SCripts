@@ -4,13 +4,16 @@
 # this script was created with the goal of helping network admins testing   #
 # their flood protections and other things. DO NOT use it to flood networks #
 # or you may face a permanent ban                                           #
-#
-# Current commands:
-# · clonex - Check if the bot is connected
-# · genclones <number of clones> - Creates the specified amount of clones
-# · delclones - Delete all clones
-# · addchan <#channel name> - Adds the specified channel to the clones channel list
-# · delchan <#channel name> - Deletes the specified channel from the clones channel list
+#---------------------------------------------------------------------------#
+
+#--------------------------------------------------------------------------------------#
+# Current commands:                                                                    #
+# clonex - Check if the bot is connected                                               #
+# genclones <number of clones> - Creates the specified amount of clones                #
+# delclones - Delete all clones                                                        #
+# addchan <#channel name> - Adds the specified channel to the clones channel list      #
+# delchan <#channel name> - Deletes the specified channel from the clones channel list #
+#--------------------------------------------------------------------------------------#
 
 namespace eval genclones {
 	
