@@ -1,14 +1,16 @@
-# This script is to be used with an eggdrop connected to a ZNC.
-# The bot must have admin rights to be able to create and delete clones
-# this script was created with the goal of helping network admins testing their flood protections
-# and other things. DO NOT use it to flood networks or you may face a permanent ban
-###
+# --------------------------------------------------------------------------#
+# This script is to be used with an eggdrop connected to a ZNC.             #
+# The bot must have admin rights to be able to create and delete clones     #
+# this script was created with the goal of helping network admins testing   #
+# their flood protections and other things. DO NOT use it to flood networks #
+# or you may face a permanent ban                                           #
+#
 # Current commands:
-# > clonex - Check if the bot is connected
-# > genclones <number of clones> - Creates the specified amount of clones
-# > delclones - Delete all clones
-# > addchan <#channel name> - Adds the specified channel to the clones channel list
-# > delchan <#channel name> - Deletes the specified channel from the clones channel list
+# · clonex - Check if the bot is connected
+# · genclones <number of clones> - Creates the specified amount of clones
+# · delclones - Delete all clones
+# · addchan <#channel name> - Adds the specified channel to the clones channel list
+# · delchan <#channel name> - Deletes the specified channel from the clones channel list
 
 namespace eval genclones {
 	
@@ -31,10 +33,11 @@ namespace eval genclones {
  	#-------------------------#
 	variable passwd "VeenuLeophah0peiha0ib0ae"
 
- 	#------------------------------------------#
-	# How long should the clones nicknames be? #-------------------------------------------------#
-	# NOTE: nicks will be nclength+2, so if `nclength` is set to 12, nicks will be 14 chars long #
- 	#--------------------------------------------------------------------------------------------#
+ 	#----------------------------------------------------------------#
+	# How long should the clones nicknames be?                       #
+	# NOTE: nicks will be nclength+2, so if `nclength` is set to 12, #
+	# nicks will be 14 chars long                                    #
+ 	#----------------------------------------------------------------#
 	variable nclength "12"
 
  	#--------------#
@@ -57,24 +60,27 @@ namespace eval genclones {
  	#--------------------------------#
 	variable chanclone "#CloneX"
 
- 	#---------------------------------------------------------------------------------------------------#
-	# List of users that will be protected when deleting all the clones (such as bot admins, ops, etc)  #
-	# when we use the command "delclones", otherwise even bot owner will be deleted and lose bot access #
-	# This users also won't have new channels added/removed to/from them #------------------------------#
-	# I strongly advise to keep "-hq"     #------------------------------#
-	# One nick per line and all lowercase #
- 	#-------------------------------------#
+ 	#---------------------------------------------------------------------#
+	# List of users that will be protected when deleting all the clones   #
+	# (such as bot admins, ops, etc) when we use the command "delclones", #
+	# otherwise even bot owner will be deleted and lose bot access.       #
+	# This users also won't have new channels added/removed to/from them  #
+	# I strongly advise to keep "-hq"                                     #
+	# NOTE: One nick per line and all lowercase                           #
+ 	#---------------------------------------------------------------------#
 	variable protected {
 		"-hq"
 		"admin1"
 		"admin2"
 	}
 	
-	#----------------------#
+	########################
 	# End of configuration #
-	#                      #----------------------------------------#
-	# DON'T TOUCH ANYTHING BELOW UNLESS YOU KNOW WHAT YOU ARE DOING #
-	#                                                               #----------------------------------------------#
+	########################
+	
+	#--------------------------------------------------------------------------------------------------------------#
+	#                        DON'T TOUCH ANYTHING BELOW UNLESS YOU KNOW WHAT YOU ARE DOING                         #
+	#                                                                                                              #
 	# If you touch the code below and then complain the script "suddenly stopped working" I'll touch you at night. #
 	#--------------------------------------------------------------------------------------------------------------#
 	
