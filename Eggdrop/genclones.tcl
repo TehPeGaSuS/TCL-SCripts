@@ -4,6 +4,8 @@
 # this script was created with the goal of helping network admins testing   #
 # their flood protections and other things. DO NOT use it to flood networks #
 # or you may face a permanent ban                                           #
+#                                                                           #
+# Last revision: 03/07/2024 - 23:22                                         #
 #---------------------------------------------------------------------------#
 
 #--------------------------------------------------------------------------------------#
@@ -177,6 +179,8 @@ namespace eval genclones {
 		putnow "PRIVMSG *controlpanel :LoadNetModule $target $::genclones::netname kickrejoin"
 		putnow "PRIVMSG *controlpanel :LoadNetModule $target $::genclones::netname route_replies"
 		putnow "PRIVMSG *controlpanel :LoadNetModule $target $::genclones::netname simple_away"
+		putnow "PRIVMSG *controlpanel :Set ChanBufferSize $target 0"
+		putnow "PRIVMSG *controlpanel :Set QueryBufferSize $target 0"
 		putnow "PRIVMSG *controlpanel :AddServer $target $::genclones::netname $::genclones::irchost $::genclones::ircport"
 		return 0
 	}
@@ -247,5 +251,5 @@ namespace eval genclones {
 	# END OF PROCS #
 	################
 	
-	putlog "::: CloneX v29/01/2024-15:41 Loaded :::"
+	putlog "::: CloneX TCL Loaded :::"
 };
