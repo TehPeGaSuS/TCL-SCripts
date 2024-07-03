@@ -40,8 +40,8 @@ namespace eval genclones {
 
  	#----------------------------------------------------------------#
 	# How long should the clones nicknames be?                       #
-	# NOTE: nicks will be nclength+2, so if `nclength` is set to 12, #
-	# nicks will be 14 chars long                                    #
+	# NOTE: nicks will be nclength+4, so if `nclength` is set to 12, #
+	# nicks will be 16 chars long                                    #
  	#----------------------------------------------------------------#
 	variable nclength "12"
 
@@ -163,7 +163,7 @@ namespace eval genclones {
 	###
 	proc create_user {nick uhost hand chan text} {
 		
-		variable target "[randstring 1 ABCDEFGHIJKLMNOPQRSTUVWXYZ]-[randstring $::genclones::nclength abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789]"
+		variable target "ZNC-[randstring $::genclones::nclength abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789]"
 		
 		if {![matchattr $hand n]} {
 			putnow "PRIVMSG $chan :ERROR! You don't have access, ${nick}."
