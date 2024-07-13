@@ -6,6 +6,7 @@
 #------------------------------------------------------------------------#
 # Commands:                                                              #
 # - !music - Displays the current music playing                          #
+# - !np - Does the same as !music                                        #
 #                                                                        #
 # - !icecast <on/off> - Enables/disables the ability to see the current  #
 #   music playing with the !music command                                #
@@ -34,6 +35,7 @@ namespace eval icecast {
 	# Binds
 	bind cron - "* * * * *" ::icecast::autoplaying
 	bind pub - ${::icecast::trigger}music ::icecast::nowplaying
+	bind pub - ${::icecast::trigger}np ::icecast::nowplaying
 	bind pub - ${::icecast::trigger}icecast ::icecast::on_off
 	bind pub - ${::icecast::trigger}iceauto ::icecast::auto_onoff
 
