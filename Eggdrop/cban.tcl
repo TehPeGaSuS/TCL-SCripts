@@ -2,7 +2,6 @@
 # KickBan TCL
 ##########
 # This script is highly experimental and needs eggdrop 1.9
-# curently the default branch at https://github.com/eggheads/eggdrop
 #
 # In order for this script to work, you need to enable some features, especially:
 #
