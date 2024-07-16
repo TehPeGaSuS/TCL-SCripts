@@ -30,30 +30,31 @@ namespace eval genclones {
 
  	#------------------------------------#
 	# IP that will be used by the clones #
+	# If empty, ZNC will try to pick any #
+	# IP from the box (usually the 1st   #
+	# assigned IPv4 or IPv6              #
  	#------------------------------------#
-	variable bindhost "2001:4860:4860::8888"
+	variable bindhost ""
 
  	#-------------------------#
 	# Password for the clones #
  	#-------------------------#
 	variable passwd "VeenuLeophah0peiha0ib0ae"
 
- 	#----------------------------------------------------------------#
-	# How long should the clones nicknames be?                       #
-	# NOTE: nicks will be nclength+4, so if `nclength` is set to 12, #
-	# nicks will be 16 chars long                                    #
- 	#----------------------------------------------------------------#
-	variable nclength "12"
+ 	#------------------------------------------#
+	# How long should the clones nicknames be? #
+ 	#------------------------------------------#
+	variable nclength "16"
 
  	#--------------#
 	# Network name #
  	#--------------#
-	variable netname "example"
+	variable netname "DALnet"
 
  	#-------------#
 	# IRC address #
  	#-------------#
-	variable irchost "irc.example.org"
+	variable irchost "irc.dal.net"
 
  	#-------------------------------------------------------------#
 	# IRC port (with "+" before the port number if using SSL/TLS) #
@@ -163,7 +164,7 @@ namespace eval genclones {
 	###
 	proc create_user {nick uhost hand chan text} {
 		
-		variable target "ZNC-[randstring $::genclones::nclength abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789]"
+		variable target "[randstring $::genclones::nclength abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789]"
 		
 		if {![matchattr $hand n]} {
 			putnow "PRIVMSG $chan :ERROR! You don't have access, ${nick}."
@@ -173,7 +174,9 @@ namespace eval genclones {
 		adduser $target ${target}!*@*
 		putnow "PRIVMSG *controlpanel :AddUser $target $::genclones::passwd"
 		putnow "PRIVMSG *controlpanel :AddNetwork $target $::genclones::netname"
-		putnow "PRIVMSG *controlpanel :Set BindHost $target $::genclones::bindhost"
+		if {$::genclones::bindhost ne ""} {
+			putnow "PRIVMSG *controlpanel :Set BindHost $target $::genclones::bindhost"
+		}
 		putnow "PRIVMSG *controlpanel :AddChan $target $::genclones::netname $::genclones::chanclone"
 		putnow "PRIVMSG *controlpanel :LoadNetModule $target $::genclones::netname keepnick"
 		putnow "PRIVMSG *controlpanel :LoadNetModule $target $::genclones::netname kickrejoin"
