@@ -66,6 +66,12 @@ namespace eval genclones {
  	#--------------------------------#
 	variable chanclone "#CloneX"
 
+	#-----------------------------------#
+	# Store messages on the clones ZNC? #
+	# 0 = no, 1 = yes                   #
+	#-----------------------------------#
+	variable storemsg "0"
+
  	#---------------------------------------------------------------------#
 	# List of users that will be protected when deleting all the clones   #
 	# (such as bot admins, ops, etc) when we use the command "delclones", #
@@ -182,10 +188,10 @@ namespace eval genclones {
 		putnow "PRIVMSG *controlpanel :LoadNetModule $target $::genclones::netname kickrejoin"
 		putnow "PRIVMSG *controlpanel :LoadNetModule $target $::genclones::netname route_replies"
 		putnow "PRIVMSG *controlpanel :LoadNetModule $target $::genclones::netname simple_away"
-		# We dont need to store channel or queries messages with the clones
-		putnow "PRIVMSG *controlpanel :Set ChanBufferSize $target 0"
-		putnow "PRIVMSG *controlpanel :Set QueryBufferSize $target 0"
-		#
+		if {$::genclones::storemsg == "0"} {
+			putnow "PRIVMSG *controlpanel :Set ChanBufferSize $target 0"
+			putnow "PRIVMSG *controlpanel :Set QueryBufferSize $target 0"
+		}
 		putnow "PRIVMSG *controlpanel :AddServer $target $::genclones::netname $::genclones::irchost $::genclones::ircport"
 		return 0
 	}
