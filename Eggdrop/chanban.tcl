@@ -8,31 +8,30 @@ namespace eval chanban {
 	# Based on ist0k original script (https://github.com/ist0k/eggdrop-TCL/blob/master/bans.tcl)
 	##########
 	# Public Commands:
-	# bancmds <=- shows the list of commands.
-	# bans <=- same as bancmds
-	# banlist <=- shows channel ban list.
-	# addban <nick|banmask> [reason] <=- adds a channel ban (reason is optional).
-	# kb <nick|banmask> [reason] <=- adds a channel ban (reason is optional)
-	# delban <banmask.etc> <=- removes a channel ban.
-	# ub <banmask.etc> <=- removes a channel ban.
-	# sticky <nick|banmask> [reason] <=- adds a sticky or make an existing ban sticky (reason is optional).
-	# delsticky <banmask> <=- removes a stick ban (without removing it from the ban list).
-	# gag <=- sets a ban without kicking and therefore muting the user
-	# ungag <=- removes a gag
-	# tban <nick> <duration in hours (1-24)> <=- adds a channel temp ban with the specified duration
+	# bancmds - shows the list of commands.
+	# banlist - shows channel ban list.
+	# addban <nick|banmask> [reason] - adds a channel ban (reason is optional).
+	# kb <nick|banmask> [reason] - same as `addban`
+	# delban <banmask.etc> - removes a channel ban.
+	# ub <banmask.etc> - same as delban`
+	# sticky <nick|banmask> [reason] - adds a sticky or make an existing ban sticky (reason is optional).
+	# delsticky <banmask> - removes a stick ban (without removing it from the ban list).
+	# gag - sets a ban without kicking and therefore muting the user
+	# ungag - removes a gag
+	# tban <nick> <duration in hours (1-24)> - adds a channel temp ban with the specified duration
 	##########
 	# MSG Commands
-	# bancmds <#channel> <= shows the list of commands (chan is needed to check access).
-	# banlist <#channel> <=- shows channel ban list.
-	# addban <#channel> <nick|banmask> [reason] <=- adds a channel ban (reason is optional).
-	# kb <#channel> <nick|banmask> [reason] <=- adds a channel ban (reason is optional).
-	# delban <#channel> <banmask> <=- removes a channel ban.
-	# ub <#channel> <banmask> <=- removes a channel ban.
-	# sticky <#channel> <nick|banmask> [reason] <=- adds a sticky or make an existing ban sticky (reason is optional).
-	# delsticky <#channel> <banmask> <=- removes a stick ban (without removing it from the ban list).
-	# gag <#channel> <nick> <=- sets a ban without kicking and therefore muting the user
-	# ungag <#channel> <nick> <=- removes a gag
-	# tban <#channel> <nick> <duration in hours (1-24)> <=- adds a channel temp ban with the specified duration
+	# bancmds <#channel> - shows the list of commands (chan is needed to check access).
+	# banlist <#channel> - shows channel ban list.
+	# addban <#channel> <nick|banmask> [reason] - adds a channel ban (reason is optional).
+	# kb <#channel> <nick|banmask> [reason] - same as `addban`
+	# delban <#channel> <banmask> - removes a channel ban.
+	# ub <#channel> <banmask> - same as `delban`
+	# sticky <#channel> <nick|banmask> [reason] - adds a sticky or make an existing ban sticky (reason is optional).
+	# delsticky <#channel> <banmask> - removes a stick ban (without removing it from the ban list).
+	# gag <#channel> <nick> - sets a ban without kicking and therefore muting the user
+	# ungag <#channel> <nick> - removes a gag
+	# tban <#channel> <nick> <duration in hours (1-24)> - adds a channel temp ban with the specified duration
 	##########
 
 	# Set global command trigger (default: !)
@@ -48,6 +47,9 @@ namespace eval chanban {
 
 	# Set the default ban reason for when banning the user
 	variable defbanreason "User has been banned from the channel."
+
+	# Temporary ban default duration (minimum 10 minutes)
+	variable deftbanduration "10"
 
 	# Set the banmask to use in banning the user
 	#	Available types are:
@@ -75,7 +77,6 @@ namespace eval chanban {
 	}
 
 	bind pub - ${::chanban::banstriga}bancmds ::chanban::chan:bancmds
-	bind pub - ${::chanban::banstriga}bans ::chanban::chan:bancmds
 	proc chan:bancmds {nick uhost hand chan text} {
 		variable banglobflags
 		variable banchanflags
@@ -90,7 +91,6 @@ namespace eval chanban {
 	}
 
 	bind msg - bancmds ::chanban::msg:bancmds
-	bind msg - bans ::chanban::msg:bancmds
 	proc msg:bancmds {nick uhost hand text} {
 		variable banglobflags
 		variable banchanflags
@@ -946,7 +946,7 @@ namespace eval chanban {
 		variable cbantype
 		
 		variable target [lindex [split $text] 0]
-		variable hours [lindex [split $text] 1]
+		variable minutes [lindex [split $text] 1]
 
 		if {![matchattr $hand $banglobflags|$banchanflags $chan]} {
 			putserv "PRIVMSG $chan :\002\[$nick\]\002 \037ERROR!\037 You don't have access!"
@@ -965,17 +965,16 @@ namespace eval chanban {
 		
 		variable banmask "[maskhost ${target}![getchanhost $target $chan] $cbantype]"
 		
-		if {$hours eq ""} {
-			putserv "PRIVMSG $chan :\002\[$nick\]\002 \037ERROR\037: Incorrect Parameters. \037SYNTAX\037: [::chanban::getBanTriga]tban <nick> <duration (in hours, between 1-24)>"
-			return 0
+		if {$minutes eq ""} {
+			set bantime $::chanban::deftbanduration
+		} else {
+			set bantime $minutes
 		}
 			
-		if {($hours < "1") || ($hours > "24")} {
-			putserv "PRIVMSG $chan :\002\[$nick\]\002 \037ERROR\037: Incorrect Parameters. \037SYNTAX\037: [::chanban::getBanTriga]tban <nick> <duration (in hours, between 1-24)>"
+		if {($minutes < "10") || ($minutes > "60")} {
+			putserv "PRIVMSG $chan :\002\[$nick\]\002 \037ERROR\037: Incorrect Parameters. \037SYNTAX\037: [::chanban::getBanTriga]tban <nick> <duration (in minutes, between 10-60)>"
 			return 0
 		}
-		
-		variable bantime [expr {$hours * 60}]
 
 		if {[isban $banmask $chan]} {
 			putserv "PRIVMSG $chan :\002\[$nick\]\002 \037ERROR\037: Banmask already exists."
@@ -998,7 +997,7 @@ namespace eval chanban {
 
 		variable chan [lindex [split $text] 0]
 		variable target [lindex [split $text] 1]
-		variable hours [lindex [split $text] 2]
+		variable minutes [lindex [split $text] 2]
 		
 		if {$chan eq ""} {
 			putserv "PRIVMSG $nick :\037ERROR\037: Incorrect Parameters. \037SYNTAX\037: tban #chan <nick> <duration (in hours, between 1-24)>"
@@ -1033,16 +1032,15 @@ namespace eval chanban {
 		variable banmask "[maskhost ${target}![getchanhost $target $chan] $cbantype]"
 		
 		if {$hours eq ""} {
-			putserv "PRIVMSG $nick :\002\[$chan\]\002 \037ERROR\037: Incorrect Parameters. \037SYNTAX\037: tban <nick> <duration (in hours, between 1-24)>"
-			return 0
+			set bantime $::chanban::deftbanduration
+		} else {
+			set bantime $minutes
 		}
 		
-		if {($hours < "1") || ($hours > "24")} {
-			putserv "PRIVMSG $nick :\002\[$chan\]\002 \037ERROR\037: Incorrect Parameters. \037SYNTAX\037: tban <nick> <duration (in hours, between 1-24)>"
+		if {($minutes < "10") || ($minutes > "60")} {
+			putserv "PRIVMSG $nick :\002\[$chan\]\002 \037ERROR\037: Incorrect Parameters. \037SYNTAX\037: tban <nick> <duration (in minutes, between 10-60)>"
 			return 0
 		}
-		
-		variable bantime [expr {$hours * 60}]
 
 		if {[isban $banmask $chan]} {
 			putserv "PRIVMSG $nick :\002\[$chan\]\002 \037ERROR\037: Banmask already exists."
