@@ -94,8 +94,12 @@ proc join_onjoin {nick uhost hand chan} {
 	# keep everything lowercase for simplicity.
 	set ch [strlwr $chan]
 	set filename "[string trim "$ch" #]_nicklist.txt"
-	#set uhost [strlwr [maskhost [getchanhost $nick $chan] 2]]; # This leaded to erratic bahaviour in some clients using shared services
-	set uhost [strlwr $uhost]
+	# We need to exempt at least IRCCloud from matching only by IP
+	if {[matchstr "*uid*" $uhost] || [matchstr "*sid*" $uhost]} {
+		set set uhost [strlwr $uhost]
+	} else {
+		set uhost [strlwr [maskhost [getchanhost $nick $chan] 2]]
+	}
 	# read the file
 	if {![file exists $filename]} {
 		set file [open $filename "w"]
