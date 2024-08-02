@@ -96,7 +96,7 @@ proc join_onjoin {nick uhost hand chan} {
 	set filename "[string trim "$ch" #]_nicklist.txt"
 	# We need to exempt at least IRCCloud from matching only by IP
 	if {[matchstr "*uid*" $uhost] || [matchstr "*sid*" $uhost]} {
-		set set uhost [strlwr $uhost]
+		set uhost [strlwr $uhost]
 	} else {
 		set uhost [strlwr [maskhost [getchanhost $nick $chan] 2]]
 	}
