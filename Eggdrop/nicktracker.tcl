@@ -88,7 +88,7 @@ proc nick_nickchange {nick uhost hand chan newnick} {
 # check for joins
 ##########
 proc join_onjoin {nick uhost hand chan} {
-	global botnick dupes channelmap list_length
+	global botnick dupes channelmap list_length alertnicks
 	if {![channel get $chan "nicktrack"]} {  return 0  }
 
 	# keep everything lowercase for simplicity.
