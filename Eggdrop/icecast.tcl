@@ -59,7 +59,7 @@ namespace eval icecast {
 	### Requirements ###
 	package require http
 	package require json
-	
+
 	if {[string match "https://*" $::icecast::jsonURL]} {
 		if {[catch {package require tls}]} {
 			putlog "ERROR: TLS package is required to use HTTPS"
@@ -93,7 +93,7 @@ namespace eval icecast {
 	}
 
 	proc announce {tchan} {
-		
+
 		set token [::http::geturl "$::icecast::jsonURL" -timeout 10000]
 		set data [::http::data $token]
 		set datadict [::json::json2dict $data]
@@ -110,14 +110,14 @@ namespace eval icecast {
 
 		set dj [dict get $datadict icestats source server_name]
 		set title [dict get $datadict icestats source title]
-		
+
 		if {$tchan ne "all"} {
 			putserv "PRIVMSG $tchan :\[$::icecast::radioName\] DJ: ${dj} :: Song: $title :: Tune in: $::icecast::listenURL"
 			return
 		} else {
 			if {$::icecast::lastTrack ne "$title"} {
 				set ::icecast::lastTrack "$title"
-				
+
 				foreach chan [channels] {
 					if {[channel get $chan iceauto]} {
 						putserv "PRIVMSG $chan :\[$::icecast::radioName\] DJ: ${dj} :: Song: $title :: Tune in: $::icecast::listenURL"
