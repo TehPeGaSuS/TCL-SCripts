@@ -1,7 +1,9 @@
-#------------------------------------------------------------#
-# Icecast script to announce musics from your online radio   #
-# This should work out of the box with single source streams #
-#------------------------------------------------------------#
+#-------------------------------------------------------------#
+# Icecast script to announce musics from your online radio    #
+# This should work out of the box with single source streams  #
+#                                                             #
+# This script was tested with eggdrop 1.9.x and Icecast 2.4.x #
+#-------------------------------------------------------------#
 
 #------------------------------------------------------------------------#
 # Commands:                                                              #
@@ -15,22 +17,26 @@
 #   the current music playing (check is done every minute, but the music #
 #   is only announced if it has changed                                  #
 #------------------------------------------------------------------------#
+
 namespace eval icecast {
 
 	#---------------#
 	# Configuration #
 	#---------------#
 	# Trigger
-	set trigger "!"
+	variable trigger "!"
 
 	# URL for the json page
-	set jsonURL "https://your.radio.tld:8001/status-json.xsl"
+	variable jsonURL "https://your.radio.tld:8001/status-json.xsl"
 
 	# Radio Name
-	set radioName "Your Radio Name"
+	variable radioName "Your Radio Name"
 
 	# Radio URL
-	set listenURL "https://your.radio.tld/"
+	variable listenURL "https://your.radio.tld/"
+	
+	# Comment out the next line if you don't use HTTPS
+	package require tls 1.7.11
 
 	# Binds
 	bind cron - "* * * * *" ::icecast::autoplaying
@@ -45,16 +51,15 @@ namespace eval icecast {
 	### Requirements ###
 	package require http
 	package require json
-	
-	# Comment out the next line if you don't use HTTPS
-	package require tls 1.7.11
 
 	### Flags ###
 	setudef flag icecast
 	setudef flag iceauto
 
 	### Last track ###
-	if {![info exists ::icecast::lastTrack]} { set lastTrack "" }
+	if {![info exists ::icecast::lastTrack]} {
+		set lastTrack ""
+	}
 
 	# Procs
 	proc nowplaying {nick uhost hand chan text} {
@@ -172,4 +177,5 @@ namespace eval icecast {
 			return 0
 		}
 	}
+	putlog "-= icecast.tcl v1.0 by PeGaSuS loaded =-"
 }; # end of icecast space
