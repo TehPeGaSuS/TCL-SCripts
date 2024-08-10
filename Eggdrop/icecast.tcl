@@ -18,6 +18,15 @@
 #   is only announced if it has changed                                  #
 #------------------------------------------------------------------------#
 
+#-----------------------------------------------------------#
+#                         THANKS TO                         #
+#                                                           #
+# - DasBrain, for the pointers about `variable` vs `set`    #
+#                                                           #
+# - CrazyCat, for the help to automate de TLS detection and #
+#   some other code enhancement ideas                       #
+#-----------------------------------------------------------#
+
 namespace eval icecast {
 
 	#---------------#
@@ -34,9 +43,6 @@ namespace eval icecast {
 
 	# Radio URL
 	variable listenURL "https://your.radio.tld/"
-	
-	# Comment out the next line if you don't use HTTPS
-	package require tls 1.7.11
 
 	# Binds
 	bind cron - "* * * * *" ::icecast::autoplaying
@@ -45,12 +51,23 @@ namespace eval icecast {
 	bind pub - ${::icecast::trigger}icecast ::icecast::on_off
 	bind pub - ${::icecast::trigger}iceauto ::icecast::auto_onoff
 
-	#----------------------#
-	# End of configuration #
-	#----------------------#
+	#--------------------------------------------------------------------------------------------------------------#
+	#                        DON'T TOUCH ANYTHING BELOW UNLESS YOU KNOW WHAT YOU ARE DOING                         #
+	#                                                                                                              #
+	# If you touch the code below and then complain the script "suddenly stopped working" I'll touch you at night. #
+	#--------------------------------------------------------------------------------------------------------------#
 	### Requirements ###
 	package require http
 	package require json
+	
+	if {[string match "https://*" $::icecast::jsonURL]} {
+		if {[catch {package require tls}]} {
+			putlog "ERROR: TLS package is required to use HTTPS"
+			return
+		} else {
+			::http::register https 443 [list ::tls::socket -autoservername true]
+		}
+	}
 
 	### Flags ###
 	setudef flag icecast
@@ -76,12 +93,9 @@ namespace eval icecast {
 	}
 
 	proc announce {tchan} {
-
-		# Comment out the next line if you don't use HTTPS
-		::http::register https 443 [list ::tls::socket -autoservername true]
-
-		set token [http::geturl "$::icecast::jsonURL" -timeout 10000]
-		set data [http::data $token]
+		
+		set token [::http::geturl "$::icecast::jsonURL" -timeout 10000]
+		set data [::http::data $token]
 		set datadict [::json::json2dict $data]
 		::http::cleanup $token
 
@@ -177,5 +191,5 @@ namespace eval icecast {
 			return 0
 		}
 	}
-	putlog "-= icecast.tcl v1.0 by PeGaSuS loaded =-"
+	putlog "-= icecast.tcl v1.2 by PeGaSuS loaded =-"
 }; # end of icecast space
