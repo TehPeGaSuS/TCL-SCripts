@@ -1,266 +1,195 @@
-# --------------------------------------------------------------------------#
-# This script is to be used with an eggdrop connected to a ZNC.             #
-# The bot must have admin rights to be able to create and delete clones     #
-# this script was created with the goal of helping network admins testing   #
-# their flood protections and other things. DO NOT use it to flood networks #
-# or you may face a permanent ban                                           #
-#                                                                           #
-# Last revision: 03/07/2024 - 23:22                                         #
-#---------------------------------------------------------------------------#
+#-------------------------------------------------------------#
+# Icecast script to announce musics from your online radio    #
+# This should work out of the box with single source streams  #
+#                                                             #
+# This script was tested with eggdrop 1.9.x and Icecast 2.4.x #
+#-------------------------------------------------------------#
 
-#--------------------------------------------------------------------------------------#
-# Current commands:                                                                    #
-# clonex - Check if the bot is connected                                               #
-# genclones <number of clones> - Creates the specified amount of clones                #
-# delclones - Delete all clones                                                        #
-# addchan <#channel name> - Adds the specified channel to the clones channel list      #
-# delchan <#channel name> - Deletes the specified channel from the clones channel list #
-#--------------------------------------------------------------------------------------#
+#------------------------------------------------------------------------#
+# Commands:                                                              #
+# - !music - Displays the current music playing                          #
+# - !np - Does the same as !music                                        #
+#                                                                        #
+# - !icecast <on/off> - Enables/disables the ability to see the current  #
+#   music playing with the !music command                                #
+#                                                                        #
+# - !iceauto <on/off> - Enables/disables the automatic annoucement of    #
+#   the current music playing (check is done every minute, but the music #
+#   is only announced if it has changed                                  #
+#------------------------------------------------------------------------#
 
-namespace eval genclones {
-	
-	#################
-	# CONFIGURATION #
-	#################
+#-----------------------------------------------------------#
+#                         THANKS TO                         #
+#                                                           #
+# - DasBrain, for the pointers about `variable` vs `set`    #
+#                                                           #
+# - CrazyCat, for the help to automate de TLS detection and #
+#   some other code enhancement ideas                       #
+#-----------------------------------------------------------#
 
- 	#----------------------------------#
-	# Trigger to use with the commands #
- 	#----------------------------------#
-	variable cloneTrigger "!"
+namespace eval icecast {
 
- 	#------------------------------------#
-	# IP that will be used by the clones #
-	# If empty, ZNC will try to pick any #
-	# IP from the box (usually the 1st   #
-	# assigned IPv4 or IPv6              #
- 	#------------------------------------#
-	variable bindhost ""
+	#---------------#
+	# Configuration #
+	#---------------#
+	# Trigger
+	variable trigger "!"
 
- 	#-------------------------#
-	# Password for the clones #
- 	#-------------------------#
-	variable passwd "VeenuLeophah0peiha0ib0ae"
+	# URL for the json page
+	variable jsonURL "https://your.radio.tld:8001/status-json.xsl"
 
- 	#------------------------------------------#
-	# How long should the clones nicknames be? #
- 	#------------------------------------------#
-	variable nclength "16"
+	# Radio Name
+	variable radioName "Your Radio Name"
 
- 	#--------------#
-	# Network name #
- 	#--------------#
-	variable netname "DALnet"
+	# Radio URL
+	variable listenURL "https://your.radio.tld/"
 
- 	#-------------#
-	# IRC address #
- 	#-------------#
-	variable irchost "irc.dal.net"
+	# Binds
+	bind cron - "* * * * *" ::icecast::autoplaying
+	bind pub - ${::icecast::trigger}music ::icecast::nowplaying
+	bind pub - ${::icecast::trigger}np ::icecast::nowplaying
+	bind pub - ${::icecast::trigger}icecast ::icecast::on_off
+	bind pub - ${::icecast::trigger}iceauto ::icecast::auto_onoff
 
- 	#-------------------------------------------------------------#
-	# IRC port (with "+" before the port number if using SSL/TLS) #
- 	#-------------------------------------------------------------#
-	variable ircport "+6697"
-
- 	#--------------------------------#
-	# Channel for the clones to join #
- 	#--------------------------------#
-	variable chanclone "#CloneX"
-
-	#-----------------------------------#
-	# Store messages on the clones ZNC? #
-	# 0 = no, 1 = yes                   #
-	#-----------------------------------#
-	variable storemsg "0"
-
- 	#---------------------------------------------------------------------#
-	# List of users that will be protected when deleting all the clones   #
-	# (such as bot admins, ops, etc) when we use the command "delclones", #
-	# otherwise even bot owner will be deleted and lose bot access.       #
-	# This users also won't have new channels added/removed to/from them  #
-	# I strongly advise to keep "-hq"                                     #
-	# NOTE: One nick per line and all lowercase                           #
- 	#---------------------------------------------------------------------#
-	variable protected {
-		"-hq"
-		"admin1"
-		"admin2"
-	}
-	
-	########################
-	# End of configuration #
-	########################
-	
 	#--------------------------------------------------------------------------------------------------------------#
 	#                        DON'T TOUCH ANYTHING BELOW UNLESS YOU KNOW WHAT YOU ARE DOING                         #
 	#                                                                                                              #
 	# If you touch the code below and then complain the script "suddenly stopped working" I'll touch you at night. #
 	#--------------------------------------------------------------------------------------------------------------#
+	### Requirements ###
+	package require http
+	package require json
 	
-	
-	#########
-	# BINDS #
-	#########
-
- 	#------------------------------------#
-	# Lets check if the bot is connected #
- 	#------------------------------------#
-	bind pub - ${::genclones::cloneTrigger}clonex ::genclones::status_check
-
- 	#------------------------------------------#
-	# Lets generate X number of clones at once #
- 	#------------------------------------------#
-	bind pub - ${::genclones::cloneTrigger}genclones ::genclones::gen_clones
-
- 	#-----------------------------------------------#
-	# Lets add a new channel for the clones to join #
- 	#-----------------------------------------------#
-	bind pub - ${::genclones::cloneTrigger}addchan ::genclones::addchan_clones
-
- 	#----------------------------------------#
-	# Let's remove a channel from the clones #
- 	#----------------------------------------#
-	bind pub - ${::genclones::cloneTrigger}delchan ::genclones::delchan_clones
-
- 	#----------------------------#
-	# Lets delete ALL the clones #
- 	#----------------------------#
-	bind pub - ${::genclones::cloneTrigger}delclones ::genclones::del_clones
-	
-	#-----------------------------------------------------------------------#
- 	# This is how we get the tigger to be used on messages and inside procs #
-  	#-----------------------------------------------------------------------#
-	proc getZncTrigger {} {
-		variable ::genclones::cloneTrigger
-		return $::genclones::cloneTrigger
+	if {[string match "https://*" $::icecast::jsonURL]} {
+		if {[catch {package require tls}]} {
+			putlog "ERROR: TLS package is required to use HTTPS"
+			return
+		} else {
+			::http::register https 443 [list ::tls::socket -autoservername true]
+		}
 	}
-	
-	#########
-	# PROCS #
-	#########
-	proc status_check {nick uhost hand chan text} {
-		putnow "PRIVMSG $chan :Online!"
-		return 0
+
+	### Flags ###
+	setudef flag icecast
+	setudef flag iceauto
+
+	### Last track ###
+	if {![info exists ::icecast::lastTrack]} {
+		set lastTrack ""
 	}
-	
-	###
-	proc gen_clones {nick uhost hand chan text} {
-		
-		if {![matchattr $hand n]} {
-			putnow "PRIVMSG $chan :ERROR! You don't have access, ${nick}."
+
+	# Procs
+	proc nowplaying {nick uhost hand chan text} {
+
+		if {![channel get $chan icecast]} {
+			putserv "PRIVMSG $chan :ERROR! Icecast not enabled on ${chan}."
 			return 0
 		}
-		
-		variable clonenum "[lindex [split $text] 0]"
-		
-		if {$clonenum eq ""} {
-			putnow "PRIVMSG $chan :ERROR! Syntax: [::genclones::getZncTrigger]genclone <number of clones>"
-			return 0
-		}
-		
-		set i 0
-		putnow "PRIVMSG $chan :Starting generation of $clonenum clones."
-		while {$i < $clonenum} {
-			incr i
-			::genclones::create_user $nick $uhost $hand $chan $text
-		}
-		putnow "PRIVMSG $chan :Generated $i clones."
-		return 0
+		::icecast::announce $chan
 	}
-	
-	###
-	proc create_user {nick uhost hand chan text} {
+
+	proc autoplaying {min hour day month dow} {
+		::icecast::announce all
+	}
+
+	proc announce {tchan} {
 		
-		variable target "[randstring $::genclones::nclength abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789]"
-		
-		if {![matchattr $hand n]} {
-			putnow "PRIVMSG $chan :ERROR! You don't have access, ${nick}."
-			return 0
+		set token [::http::geturl "$::icecast::jsonURL" -timeout 10000]
+		set data [::http::data $token]
+		set datadict [::json::json2dict $data]
+		::http::cleanup $token
+
+		if {![dict exists $datadict icestats source]} {
+			if {$tchan ne "all" } {
+				putserv "PRIVMSG $tchan :No source playing"
+				return 0
+			} else {
+				return 0
+			}
 		}
 
-		adduser $target ${target}!*@*
-		putnow "PRIVMSG *controlpanel :AddUser $target $::genclones::passwd"
-		putnow "PRIVMSG *controlpanel :AddNetwork $target $::genclones::netname"
-		if {$::genclones::bindhost ne ""} {
-			putnow "PRIVMSG *controlpanel :Set BindHost $target $::genclones::bindhost"
-		}
-		putnow "PRIVMSG *controlpanel :AddChan $target $::genclones::netname $::genclones::chanclone"
-		putnow "PRIVMSG *controlpanel :LoadNetModule $target $::genclones::netname keepnick"
-		putnow "PRIVMSG *controlpanel :LoadNetModule $target $::genclones::netname kickrejoin"
-		putnow "PRIVMSG *controlpanel :LoadNetModule $target $::genclones::netname route_replies"
-		putnow "PRIVMSG *controlpanel :LoadNetModule $target $::genclones::netname simple_away"
-		if {$::genclones::storemsg == "0"} {
-			putnow "PRIVMSG *controlpanel :Set ChanBufferSize $target 0"
-			putnow "PRIVMSG *controlpanel :Set QueryBufferSize $target 0"
-		}
-		putnow "PRIVMSG *controlpanel :AddServer $target $::genclones::netname $::genclones::irchost $::genclones::ircport"
-		return 0
-	}
-	
-	###
-	proc addchan_clones {nick uhost hand chan text} {
+		set dj [dict get $datadict icestats source server_name]
+		set title [dict get $datadict icestats source title]
 		
-		variable cchan "[lindex [split $text] 0]"
-		
-		if {![matchattr $hand n]} {
-			putnow "PRIVMSG $chan :ERROR! You don't have access, ${nick}."
-			return 0
-		}
-		
-		if {![matchstr "#*" $cchan]} {
-			putnow "PRIVMSG $chan :ERROR! Syntax: [::genclones::getZncTrigger]addchan <#channel name>"
-			return 0
-		}
-		
-		foreach clone [split [userlist]] {
-			if {!([strlwr $clone] in $::genclones::protected)} {
-				putnow "PRIVMSG *controlpanel :AddChan $clone $::genclones::netname $::genclones::chanclone"
+		if {$tchan ne "all"} {
+			putserv "PRIVMSG $tchan :\[$::icecast::radioName\] DJ: ${dj} :: Song: $title :: Tune in: $::icecast::listenURL"
+			return
+		} else {
+			if {$::icecast::lastTrack ne "$title"} {
+				set ::icecast::lastTrack "$title"
+				
+				foreach chan [channels] {
+					if {[channel get $chan iceauto]} {
+						putserv "PRIVMSG $chan :\[$::icecast::radioName\] DJ: ${dj} :: Song: $title :: Tune in: $::icecast::listenURL"
+					}
+				}
 			}
 		}
 	}
-	
-	###
-	proc delchan_clones {nick uhost hand chan text} {
-		
-		variable cchan "[lindex [split $text] 0]"
-		
-		if {![matchattr $hand n]} {
-			putnow "PRIVMSG $chan :ERROR! You don't have access, ${nick}."
+
+	proc on_off {nick uhost hand chan text} {
+
+		set option [lindex [split $text] 0]
+
+		if {![matchattr [nick2hand $nick] m]} {
+			putserv "PRIMSG $chan :ERROR! You don't have access, ${nick}!"
 			return 0
 		}
-		
-		if {![matchstr "#*" $cchan]} {
-			putnow "PRIVMSG $chan :ERROR! Syntax: [::genclones::getZncTrigger]delchan <#channel name>"
-			return 0
-		}
-		
-		foreach clone [split [userlist]] {
-			if {!([strlwr $clone] in $::genclones::protected)} {
-				putnow "PRIVMSG *controlpanel :DelChan $clone $::genclones::netname $::genclones::chanclone"
+
+		if {$option eq "on"} {
+			if {[channel get $chan icecast]} {
+				putserv "PRIVMSG $chan :ERROR! Icecast already enabled on $chan"
+				return 0
+			} else {
+				channel set $chan +icecast
+				putserv "PRIVMSG $chan :Icecast enabled on $chan"
+				return 0
 			}
-		}
-	}		
-	
-	###
-	proc del_clones {nick uhost hand chan text} {
-		
-		if {![matchattr $hand n]} {
-			putnow "PRIVMSG $chan :ERROR! You don't have access, ${nick}."
-			return 0
-		}
-		
-		foreach clone [split [userlist]] {
-			if {!([strlwr $clone] in $::genclones::protected)} {
-				deluser $clone
-				putlog "Deleted clone: $clone"
-				putnow "PRIVMSG *controlpanel :DelUser $clone"
+		} elseif {$option eq "off"} {
+			if {![channel get $chan icecast]} {
+				putserv "PRIVMSG $chan :ERROR! Icecast already disabled on $chan"
+				return 0
+			} else {
+				channel set $chan -icecast
+				putserv "PRIVMSG $chan :Icecast disabled on $chan"
+				return 0
 			}
+		} else {
+			putserv "PRIVMSG $chan :ERROR! Syntax: ${::icecast::trigger}icecast on/off"
 		}
-		return 0
 	}
-	
-	################
-	# END OF PROCS #
-	################
-	
-	putlog "::: CloneX TCL Loaded :::"
-};
+
+	proc auto_onoff {nick uhost hand chan text} {
+
+		set option [lindex [split $text] 0]
+
+		if {![matchattr [nick2hand $nick] m]} {
+			putserv "PRIVMSG $chan :ERROR! You don't have access, ${nick}!"
+			return 0
+		}
+
+		if {$option eq "on"} {
+			if {[channel get $chan iceauto]} {
+				putserv "PRIVMSG $chan :ERROR! Auto Icecast already enabled on $chan"
+				return 0
+			} else {
+				channel set $chan +iceauto
+				putserv "PRIVMSG $chan :Auto Icecast enabled on $chan"
+				return 0
+			}
+		} elseif {$option eq "off"} {
+			if {![channel get $chan iceauto]} {
+				putserv "PRIVMSG $chan :ERROR! Auto Icecast already disabled on $chan"
+				return 0
+			} else {
+				channel set $chan -iceauto
+				putserv "PRIVMSG $chan :Auto Icecast disabled on $chan"
+				return 0
+			}
+		} else {
+			putserv "PRIVMSG $chan :ERROR! Syntax: ${::icecast::trigger}iceauto on/off"
+			return 0
+		}
+	}
+	putlog "-= icecast.tcl v1.1 by PeGaSuS loaded =-"
+}; # end of icecast space
