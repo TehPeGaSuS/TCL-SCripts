@@ -70,7 +70,7 @@ namespace eval chansec {
 			return 0
 		}
 
-		if {([validuser [nick2hand $nick]] || [isbotnick $nick] || [isop $nick $chan] || [ishalfop $nick $chan] || [isvoice $nick $chan])} {
+		if {([validuser [nick2hand $nick]] || [isop $nick $chan] || [ishalfop $nick $chan] || [isvoice $nick $chan])} {
 			return 0
 		}
 
