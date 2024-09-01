@@ -129,7 +129,7 @@ namespace eval cban {
 	
 	################
 	# Public binds #
-	##########
+	################
 	bind pub - ${banTrigger}cban ::cban::cban:pub
 	bind pub - ${banTrigger}uncban ::cban::uncban:pub
 	bind pub - ${banTrigger}addban ::cban::addban:pub
@@ -137,9 +137,9 @@ namespace eval cban {
 	bind pub - ${banTrigger}kick ::cban::kick:pub
 	bind pub - ${banTrigger}bans ::cban::bans:pub
 	
-	##########
-	# PM binds
-	##########
+	#########################
+	# Private message binds #
+	#########################
 	bind msg - cban ::cban::cban:msg
 	bind msg - uncban ::cban::uncban:msg
 	bind msg - addban ::cban::addban:msg
@@ -147,9 +147,9 @@ namespace eval cban {
 	bind msg - kick ::cban::kick:msg
 	bind msg - bans ::cban::bans:msg
 	
-	##########
-	# Public procs
-	##########
+	################
+	# Public procs #
+	################
 	
 	# @cban
 	proc cban:pub {nick uhost hand chan text} {
@@ -341,9 +341,9 @@ namespace eval cban {
 		return 0
 	}
 	
-	##########
-	# PM procs
-	##########
+	#################
+	# Private procs #
+	#################
 	
 	# cban
 	proc cban:msg {nick uhost hand text} {
