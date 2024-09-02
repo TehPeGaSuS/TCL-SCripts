@@ -10,11 +10,11 @@
 #    from doing any damage to your channel.                                        #
 #----------------------------------------------------------------------------------#
 
-#---------------------------------------------------------------------------------#
-# NOTE: This script will automatically give the "A" user flag for each user       #
-#       that is added to the bot. It will skip users that are in the verification #
-#       phase and will not add them.                                              #
-#---------------------------------------------------------------------------------#
+#-----------------------------------------------------------------------------#
+# NOTE: This script will automatically give the "A" user flag for each user   #
+#       that is manually added to the bot. It will skip users that are in the #
+#       verification phase and will not add them.                             #
+#-----------------------------------------------------------------------------#
 
 namespace eval chansec {
 	#---------------#
@@ -58,13 +58,18 @@ namespace eval chansec {
 			return 0
 		}
 
-		utimer $::chansec::jailTimer [list ::chansec::jail_check "$nick" "$uhost" "$hand" "$chan"]
+		utimer $::chansec::jailTimer [list ::chansec::jail_check $nick $uhost $hand $chan]
 	}
 
 	proc jail_check {nick uhost hand chan}  {
 
-		if {([validuser [nick2hand $nick]] || [isop $nick $chan] || [ishalfop $nick $chan] || [isvoice $nick $chan])} {
-			return 0
+		if {([isop $nick $chan] || [ishalfop $nick $chan] || [isvoice $nick $chan])} {
+			return
+		}
+
+		if {([validuser [nick2hand $nick]])} {
+			putserv "MODE $::chansec::jailChan +v $nick"
+			return
 		}
 
 		set jailPass "[randstring 16 abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789]"
@@ -79,10 +84,27 @@ namespace eval chansec {
 		putserv "PRIVMSG $chan :Hello ${nick}! I'll send you a PVT message with instructions on how to get +v on ${chan}."
 		putserv "PRIVMSG $chan :If you have your PVT locked, you can re-request the message with \"/msg $::botnick resend\""
 
-		utimer 5 [list {
-			puthelp "PRIVMSG $nick :Your verification code is: $jailPass"
-			puthelp "PRIVMSG $nick :Type \"verify $jailPass\" to verify yourself."
-		}]
+		utimer 5 [list resend_code $nick $uhost $hand ""]
+
+		return 0
+	}
+
+	# (Re)send the code
+	bind msg * resend ::chansec::resend_code
+
+    proc resend_code {nick uhost hand text} {
+
+		if {![matchattr [nick2hand $nick] +Z]} {
+			putserv "PRIVMSG $nick :You have been verified already. Please rejoin the channel if this is an error."
+			return 0
+		}
+
+		set jailCode [getuser [nick2hand $nick] COMMENT]
+
+		putserv "PRIVMSG $nick :Your verification code is: $jailCode"
+		putserv "PRIVMSG $nick :Type \"verify $jailCode\" to verify yourself."
+
+		return 0
 	}
 
 	# User verification
@@ -105,23 +127,8 @@ namespace eval chansec {
 			putserv "PRIVMSG $nick :!ERROR! Incorrect verification code. Please try again."
 			return
 		}
-	}
 
-	# Resend the code
-	bind msg * resend ::chansec::resend_code
-
-    proc resend_code {nick uhost hand text} {
-
-		if {![matchattr [nick2hand $nick] Z]} {
-			putserv "PRIVMSG $nick :You have been verified already. Please rejoin the channel if this is an error."
-			return 0
-		}
-
-		set jailCode [getuser [nick2hand $nick] COMMENT]
-
-		putserv "PRIVMSG $nick :Your verification code is: $jailCode"
-		putserv "PRIVMSG $nick :Type \"verify $jailCode\" to verify yourself."
-		return
+		return 0
 	}
 
     # Exception handling such as part and quit, to remove the user
@@ -151,5 +158,5 @@ namespace eval chansec {
 		}
 	}
 
-	putlog "-= Channel Security Code v1.5 by PeGaSuS loaded (02/09/2024-16:55) =-"
+	putlog "-= Channel Security Code v1.6 by PeGaSuS loaded (02/09/2024-19:05) =-"
 }; #end of chansec namespace
