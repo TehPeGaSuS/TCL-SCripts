@@ -67,14 +67,10 @@ namespace eval chansec {
 			return
 		}
 
-		if {([validuser [nick2hand $nick]])} {
+		if {[validuser [nick2hand $nick]]} {
 			putserv "MODE $::chansec::jailChan +v $nick"
-			return
-		}
-
-		set jailPass "[randstring 16 abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789]"
-
-		if {![validuser [nick2hand $nick]]} {
+		} else {
+			set jailPass "[randstring 16 abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789]"
 			adduser $nick ${nick}!*@*
 			chattr $nick +Z
 			setuser $nick PASS $jailPass
@@ -85,8 +81,6 @@ namespace eval chansec {
 		putserv "PRIVMSG $chan :If you have your PVT locked, you can re-request the message with \"/msg $::botnick resend\""
 
 		utimer 5 [list resend_code $nick $uhost $hand ""]
-
-		return 0
 	}
 
 	# (Re)send the code
@@ -115,7 +109,7 @@ namespace eval chansec {
 		set jailCode [lindex [split $text] 0]
 
 		if {![validuser [nick2hand $nick]]} {
-			putserv "PRIVMSG $nick :Sorry ${nick}, but you haven't been processed yet."
+			putserv "PRIVMSG $nick :Sorry ${nick}, but you haven't been processed yet. Please rejoin the channel if you think this is an error"
 			return
 		}
 
@@ -158,5 +152,5 @@ namespace eval chansec {
 		}
 	}
 
-	putlog "-= Channel Security Code v1.6 by PeGaSuS loaded (02/09/2024-19:05) =-"
+	putlog "-= Channel Security Code v1.6 by PeGaSuS loaded (02/09/2024-19:15) =-"
 }; #end of chansec namespace
