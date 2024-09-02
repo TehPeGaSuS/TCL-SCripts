@@ -50,44 +50,43 @@ namespace eval chansec {
 	}
 
 	# Let's handle the user join, so we can create the code
-	bind join - "$::chansec::jailChan *" ::chansec::jail_join
+	bind join * "$::chansec::jailChan *" ::chansec::jail_join
 
 	proc jail_join {nick uhost hand chan} {
 		
-		if {[isbotnick $nick]} {
+		if {(![string match "*m*" [getchanmode $chan]] || [isbotnick $nick])} {
 			return 0
 		}
-		
-		putquick "PRIVMSG $chan :Hello ${nick}! I'll send you a message with instructions on how to get +v on ${chan}."
-		putquick "PRIVMSG $chan :If you have your PVT closed, you can re-request the code with \"/msg $::botnick resend\""
 		
 		utimer $::chansec::jailTimer [list ::chansec::jail_check "$nick" "$uhost" "$hand" "$chan"]
 	}
 
 	proc jail_check {nick uhost hand chan}  {
-		
-		if {![string match "*m*" [getchanmode $chan]]} {
-			return 0
-		}
 
 		if {([validuser [nick2hand $nick]] || [isop $nick $chan] || [ishalfop $nick $chan] || [isvoice $nick $chan])} {
 			return 0
 		}
-
+		
 		set jailPass "[randstring 16 abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789]"
-
+		
 		if {![validuser [nick2hand $nick]]} {
 			adduser $nick ${nick}!*@*
 			chattr $nick +Z
 			setuser $nick PASS $jailPass
 			setuser $nick COMMENT $jailPass
 		}
-		putquick "PRIVMSG $nick :Your verification code is: $jailPass"
-		putquick "PRIVMSG $nick :Type \"verify $jailPass\" to verify yourself."
+		
+		putserv "PRIVMSG $chan :Hello ${nick}! I'll send you a message with instructions on how to get +v on ${chan}."
+		putserv "PRIVMSG $chan :If you have your pvt locked, you can re-request the message with \"/msg $::botnick resend\""
+
+		utimer 5 [list {
+			putserv "PRIVMSG $nick :Your verification code is: $jailPass"
+			putserv "PRIVMSG $nick :Type \"verify $jailPass\" to verify yourself."
+		}]
 	}
 
 	# User verification
-	bind msg - verify ::chansec::jail_verify
+	bind msg * verify ::chansec::jail_verify
 
 	proc jail_verify {nick uhost hand text} {
 
@@ -109,7 +108,7 @@ namespace eval chansec {
 	}
 	
 	# Resend the code
-	bind msg - resend ::chansec::resend_code
+	bind msg * resend ::chansec::resend_code
 	
 	proc resend_code {nick uhost hand text} {
 		
@@ -126,8 +125,8 @@ namespace eval chansec {
 	}		
 
 	# Exception handling such as part and quit, to remove the user
-	bind part - "$::chansec::jailChan *" ::chansec::jail_remove
-	bind sign - "$::chansec::jailChan *" ::chansec::jail_remove
+	bind part * "$::chansec::jailChan *" ::chansec::jail_remove
+	bind sign * "$::chansec::jailChan *" ::chansec::jail_remove
 
 	proc jail_remove {nick uhost hand chan reason} {
 
@@ -152,5 +151,5 @@ namespace eval chansec {
 		}
 	}
 
-	putlog "-= Channel Security Code v1.4 by PeGaSuS loaded (01/09/2024-15:30) =-"
+	putlog "-= Channel Security Code v1.5 by PeGaSuS loaded (02/09/2024-16:55) =-"
 }
