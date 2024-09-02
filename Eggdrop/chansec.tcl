@@ -22,7 +22,7 @@ namespace eval chansec {
 	#---------------#
 	# The channel to enable this script in
 	variable jailChan "#thelounge"
-	
+
 	# How many seconds to wait before executing the script?
 	# Minimum of 5s is advisable
 	variable jailTimer "5"
@@ -36,11 +36,11 @@ namespace eval chansec {
 	#                                                                                                              #
 	# If you touch the code below and then complain the script "suddenly stopped working" I'll touch you at night. #
 	#--------------------------------------------------------------------------------------------------------------#
-	
+
 	# This gives the "A" flag to users added to the bot, such as owners, masters, global ops, etc
 	# Users on the verification phase will be skipped and not added
 	bind cron * "*/5 * * * *" ::chansec::autoflag
-	
+
 	proc autoflag {minute hour day month weekday} {
 		foreach nick [userlist] {
 			if {[matchattr [nick2hand $nick] -ZA]} {
@@ -53,11 +53,11 @@ namespace eval chansec {
 	bind join * "$::chansec::jailChan *" ::chansec::jail_join
 
 	proc jail_join {nick uhost hand chan} {
-		
+
 		if {(![string match "*m*" [getchanmode $chan]] || [isbotnick $nick])} {
 			return 0
 		}
-		
+
 		utimer $::chansec::jailTimer [list ::chansec::jail_check "$nick" "$uhost" "$hand" "$chan"]
 	}
 
@@ -66,22 +66,22 @@ namespace eval chansec {
 		if {([validuser [nick2hand $nick]] || [isop $nick $chan] || [ishalfop $nick $chan] || [isvoice $nick $chan])} {
 			return 0
 		}
-		
+
 		set jailPass "[randstring 16 abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789]"
-		
+
 		if {![validuser [nick2hand $nick]]} {
 			adduser $nick ${nick}!*@*
 			chattr $nick +Z
 			setuser $nick PASS $jailPass
 			setuser $nick COMMENT $jailPass
 		}
-		
-		putserv "PRIVMSG $chan :Hello ${nick}! I'll send you a message with instructions on how to get +v on ${chan}."
-		putserv "PRIVMSG $chan :If you have your pvt locked, you can re-request the message with \"/msg $::botnick resend\""
+
+		putserv "PRIVMSG $chan :Hello ${nick}! I'll send you a PVT message with instructions on how to get +v on ${chan}."
+		putserv "PRIVMSG $chan :If you have your PVT locked, you can re-request the message with \"/msg $::botnick resend\""
 
 		utimer 5 [list {
-			putserv "PRIVMSG $nick :Your verification code is: $jailPass"
-			putserv "PRIVMSG $nick :Type \"verify $jailPass\" to verify yourself."
+			puthelp "PRIVMSG $nick :Your verification code is: $jailPass"
+			puthelp "PRIVMSG $nick :Type \"verify $jailPass\" to verify yourself."
 		}]
 	}
 
@@ -106,25 +106,25 @@ namespace eval chansec {
 			return
 		}
 	}
-	
+
 	# Resend the code
 	bind msg * resend ::chansec::resend_code
-	
-	proc resend_code {nick uhost hand text} {
-		
+
+    proc resend_code {nick uhost hand text} {
+
 		if {![matchattr [nick2hand $nick] Z]} {
 			putserv "PRIVMSG $nick :You have been verified already. Please rejoin the channel if this is an error."
 			return 0
 		}
-		
+
 		set jailCode [getuser [nick2hand $nick] COMMENT]
 
 		putserv "PRIVMSG $nick :Your verification code is: $jailCode"
 		putserv "PRIVMSG $nick :Type \"verify $jailCode\" to verify yourself."
 		return
-	}		
+	}
 
-	# Exception handling such as part and quit, to remove the user
+    # Exception handling such as part and quit, to remove the user
 	bind part * "$::chansec::jailChan *" ::chansec::jail_remove
 	bind sign * "$::chansec::jailChan *" ::chansec::jail_remove
 
@@ -135,16 +135,16 @@ namespace eval chansec {
 			return
 		}
 	}
-	
+
 	# Lets handle if someone gives +q/+a/+o/+h/+v to the user while they
 	# are in the verification phase
 	bind mode * "$::chansec::jailChan +*" ::chansec::jail_mode
-	
+
 	proc jail_mode {nick uhost hand chan mode target} {
 		if {$target eq "" || [isbotnick $target] || ![onchan $target $chan]} {
 			return 0
 		}
-		
+
 		if {[matchattr [nick2hand $target] +Z-A]} {
 			deluser $target
 			return
@@ -152,4 +152,4 @@ namespace eval chansec {
 	}
 
 	putlog "-= Channel Security Code v1.5 by PeGaSuS loaded (02/09/2024-16:55) =-"
-}
+}; #end of chansec namespace
