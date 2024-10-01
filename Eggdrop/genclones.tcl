@@ -5,16 +5,18 @@
 # their flood protections and other things. DO NOT use it to flood networks #
 # or you may face a permanent ban                                           #
 #                                                                           #
-# Last revision: 03/07/2024 - 23:22                                         #
+# Last revision: 01/10/2024 - 22:13                                         #
 #---------------------------------------------------------------------------#
 
 #--------------------------------------------------------------------------------------#
-# Current commands:                                                                    #
+### Current commands:                                                                ###
+#                                                                                      #
 # clonex - Check if the bot is connected                                               #
 # genclones <number of clones> - Creates the specified amount of clones                #
-# delclones - Delete all clones                                                        #
-# addchan <#channel name> - Adds the specified channel to the clones channel list      #
-# delchan <#channel name> - Deletes the specified channel from the clones channel list #
+# delclone <nick> - Deletes a specific clone user                                      #
+# delallclones - Delete all clones                                                     #
+# addchannel <#channel> - Adds the specified channel to the clones channel list        #
+# delchannel <#channel> - Deletes the specified channel from the clones channel list   #
 #--------------------------------------------------------------------------------------#
 
 namespace eval genclones {
@@ -71,35 +73,10 @@ namespace eval genclones {
 	# 0 = no, 1 = yes                   #
 	#-----------------------------------#
 	variable storemsg "0"
-
- 	#---------------------------------------------------------------------#
-	# List of users that will be protected when deleting all the clones   #
-	# (such as bot admins, ops, etc) when we use the command "delclones", #
-	# otherwise even bot owner will be deleted and lose bot access.       #
-	# This users also won't have new channels added/removed to/from them  #
-	# I strongly advise to keep "-hq"                                     #
-	# NOTE: One nick per line and all lowercase                           #
- 	#---------------------------------------------------------------------#
-	variable protected {
-		"-hq"
-		"admin1"
-		"admin2"
-	}
 	
-	########################
-	# End of configuration #
-	########################
-	
-	#--------------------------------------------------------------------------------------------------------------#
-	#                        DON'T TOUCH ANYTHING BELOW UNLESS YOU KNOW WHAT YOU ARE DOING                         #
-	#                                                                                                              #
-	# If you touch the code below and then complain the script "suddenly stopped working" I'll touch you at night. #
-	#--------------------------------------------------------------------------------------------------------------#
-	
-	
-	#########
+	#-------#
 	# BINDS #
-	#########
+	#-------#
 
  	#------------------------------------#
 	# Lets check if the bot is connected #
@@ -114,29 +91,36 @@ namespace eval genclones {
  	#-----------------------------------------------#
 	# Lets add a new channel for the clones to join #
  	#-----------------------------------------------#
-	bind pub - ${::genclones::cloneTrigger}addchan ::genclones::addchan_clones
+	bind pub - ${::genclones::cloneTrigger}addchannel ::genclones::addchan_clones
 
  	#----------------------------------------#
 	# Let's remove a channel from the clones #
  	#----------------------------------------#
-	bind pub - ${::genclones::cloneTrigger}delchan ::genclones::delchan_clones
+	bind pub - ${::genclones::cloneTrigger}delchannel ::genclones::delchan_clones
+
+    #------------------------------#
+    # Delete a specific clone user #
+    #------------------------------#
+    bind pub - ${::genclones::cloneTrigger}delclone ::genclones::del_clone
 
  	#----------------------------#
 	# Lets delete ALL the clones #
  	#----------------------------#
-	bind pub - ${::genclones::cloneTrigger}delclones ::genclones::del_clones
+	bind pub - ${::genclones::cloneTrigger}delallclones ::genclones::delall_clones
+
+	########################
+	# End of configuration #
+	########################
 	
-	#-----------------------------------------------------------------------#
- 	# This is how we get the tigger to be used on messages and inside procs #
-  	#-----------------------------------------------------------------------#
-	proc getZncTrigger {} {
-		variable ::genclones::cloneTrigger
-		return $::genclones::cloneTrigger
-	}
+	#--------------------------------------------------------------------------------------------------------------#
+	#                        DON'T TOUCH ANYTHING BELOW UNLESS YOU KNOW WHAT YOU ARE DOING                         #
+	#                                                                                                              #
+	# If you touch the code below and then complain the script "suddenly stopped working" I'll touch you at night. #
+	#--------------------------------------------------------------------------------------------------------------#
 	
-	#########
+	#-------#
 	# PROCS #
-	#########
+	#-------#
 	proc status_check {nick uhost hand chan text} {
 		putnow "PRIVMSG $chan :Online!"
 		return 0
@@ -147,14 +131,14 @@ namespace eval genclones {
 		
 		if {![matchattr $hand n]} {
 			putnow "PRIVMSG $chan :ERROR! You don't have access, ${nick}."
-			return 0
+			return
 		}
 		
 		variable clonenum "[lindex [split $text] 0]"
 		
 		if {$clonenum eq ""} {
-			putnow "PRIVMSG $chan :ERROR! Syntax: [::genclones::getZncTrigger]genclone <number of clones>"
-			return 0
+			putnow "PRIVMSG $chan :ERROR! Syntax: ${::genclones::cloneTrigger}genclone <number of clones>"
+			return
 		}
 		
 		set i 0
@@ -163,21 +147,20 @@ namespace eval genclones {
 			incr i
 			::genclones::create_user $nick $uhost $hand $chan $text
 		}
-		putnow "PRIVMSG $chan :Generated $i clones."
-		return 0
 	}
 	
 	###
 	proc create_user {nick uhost hand chan text} {
 		
-		variable target "[randstring $::genclones::nclength abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789]"
+		variable target "KS-[randstring $::genclones::nclength abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789]"
 		
 		if {![matchattr $hand n]} {
 			putnow "PRIVMSG $chan :ERROR! You don't have access, ${nick}."
-			return 0
+			return
 		}
 
 		adduser $target ${target}!*@*
+		chattr $target +X
 		putnow "PRIVMSG *controlpanel :AddUser $target $::genclones::passwd"
 		putnow "PRIVMSG *controlpanel :AddNetwork $target $::genclones::netname"
 		if {$::genclones::bindhost ne ""} {
@@ -186,76 +169,104 @@ namespace eval genclones {
 		putnow "PRIVMSG *controlpanel :AddChan $target $::genclones::netname $::genclones::chanclone"
 		putnow "PRIVMSG *controlpanel :LoadNetModule $target $::genclones::netname keepnick"
 		putnow "PRIVMSG *controlpanel :LoadNetModule $target $::genclones::netname kickrejoin"
-		putnow "PRIVMSG *controlpanel :LoadNetModule $target $::genclones::netname route_replies"
 		putnow "PRIVMSG *controlpanel :LoadNetModule $target $::genclones::netname simple_away"
 		if {$::genclones::storemsg == "0"} {
 			putnow "PRIVMSG *controlpanel :Set ChanBufferSize $target 0"
 			putnow "PRIVMSG *controlpanel :Set QueryBufferSize $target 0"
 		}
 		putnow "PRIVMSG *controlpanel :AddServer $target $::genclones::netname $::genclones::irchost $::genclones::ircport"
-		return 0
+		putnow "PRIVMSG *status :saveconfig"
+		return
 	}
 	
 	###
 	proc addchan_clones {nick uhost hand chan text} {
 		
-		variable cchan "[lindex [split $text] 0]"
+		variable tchan "[lindex [split $text] 0]"
 		
 		if {![matchattr $hand n]} {
 			putnow "PRIVMSG $chan :ERROR! You don't have access, ${nick}."
-			return 0
+			return
 		}
 		
-		if {![matchstr "#*" $cchan]} {
-			putnow "PRIVMSG $chan :ERROR! Syntax: [::genclones::getZncTrigger]addchan <#channel name>"
-			return 0
+		if {![matchstr "#*" $tchan]} {
+			putnow "PRIVMSG $chan :ERROR! Syntax: ${::genclones::cloneTrigger}addchan <#channel name>"
+			return
 		}
 		
 		foreach clone [split [userlist]] {
-			if {!([strlwr $clone] in $::genclones::protected)} {
+			if {[matchattr [nick2hand $clone] +X]} {
 				putnow "PRIVMSG *controlpanel :AddChan $clone $::genclones::netname $::genclones::chanclone"
 			}
 		}
+		return
 	}
 	
 	###
 	proc delchan_clones {nick uhost hand chan text} {
 		
-		variable cchan "[lindex [split $text] 0]"
+		variable tchan "[lindex [split $text] 0]"
 		
 		if {![matchattr $hand n]} {
 			putnow "PRIVMSG $chan :ERROR! You don't have access, ${nick}."
 			return 0
 		}
 		
-		if {![matchstr "#*" $cchan]} {
-			putnow "PRIVMSG $chan :ERROR! Syntax: [::genclones::getZncTrigger]delchan <#channel name>"
+		if {![matchstr "#*" $tchan]} {
+			putnow "PRIVMSG $chan :ERROR! Syntax: ${::genclones::cloneTrigger}delchan <#channel name>"
 			return 0
 		}
 		
 		foreach clone [split [userlist]] {
-			if {!([strlwr $clone] in $::genclones::protected)} {
+			if {[matchattr [nick2hand $clone] +X]} {
 				putnow "PRIVMSG *controlpanel :DelChan $clone $::genclones::netname $::genclones::chanclone"
 			}
 		}
-	}		
-	
+	}
+
 	###
-	proc del_clones {nick uhost hand chan text} {
+	proc del_clone {nick uhost hand chan text} {
+		set target [lindex [split $text] 0]
+
+		if {![matchattr $hand n]} {
+			putnow "PRIVMSG $chan :ERROR! You don't have access, ${nick}."
+			return
+		}
+
+		if {$target eq ""} {
+			putnow "PRIVMSG $chan :ERROR! Syntax: ${::genclones::cloneTrigger}delclone <nick>"
+			return
+		}
+
+		putnow "PRIVMSG $chan :Deleting clone ${target}..."
+
+		if {[matchattr [nick2hand $target] +X]} {
+			deluser $target
+			putnow "PRIVMSG *controlpanel :DelUser $target"
+			return
+		} else {
+			putnow "PRIVMSG $chan :$target is not a clone"
+			return
+		}
+	}
+		
+	###
+	proc delall_clones {nick uhost hand chan text} {
 		
 		if {![matchattr $hand n]} {
 			putnow "PRIVMSG $chan :ERROR! You don't have access, ${nick}."
 			return 0
 		}
 		
+		putnow "PRIVMSG $chan :Deleting all clones..."
+
 		foreach clone [split [userlist]] {
-			if {!([strlwr $clone] in $::genclones::protected)} {
+			if {[matchattr [nick2hand $clone] +X]} {
 				deluser $clone
-				putlog "Deleted clone: $clone"
 				putnow "PRIVMSG *controlpanel :DelUser $clone"
 			}
 		}
-		return 0
+		return
 	}
 	
 	################
