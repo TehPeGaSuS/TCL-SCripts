@@ -1,17 +1,19 @@
-###
-# IdleRPG Auto Login
-###
-# This scripts makes your bot automatically log in into your IdleRPG account
-# Just edit the script to fit your needs and load it to your bot.
-# Happy idling
-###
+#--------------------#
+# IdleRPG Auto Login #
+#--------------------#
+
+#----------------------------------------------------------------------------#
+# This scripts makes your bot automatically log in into your IdleRPG account #
+# Just edit the script to fit your needs and load it to your bot.            #
+# HAPPY IDLING!!!                                                            #
+#----------------------------------------------------------------------------#
 
 namespace eval idlerpg {
     # IdleRG Channel
-    variable Chan "#IdleRPG"
+    variable Chan "##idlerpg"
 
     # IdleRPG Bot
-    variable Bot "IdleRPG"
+    variable Bot "IdleRPGbot"
 
     # IdleRPG Character Name
     variable Character "CHARACTER"
@@ -21,24 +23,23 @@ namespace eval idlerpg {
 
     ### Binds
     # Join
-    bind join - * ::idlerpg::idleJoin
+    bind join - "$::idlerpg::Chan *" ::idlerpg::idleJoin
 
     ### Procs
     proc idleJoin {nick uhost hand chan} {
-        if {$chan eq "$::idlerpg::Chan"} {
-            if {$nick eq "$::idlerpg::Bot"} {
-                putlog "Sending LOGIN command because $::idlerpg::Bot bot just entered the channel"
-                putlog "This is just in case we need to relogin"
-                putserv "PRIVMSG $nick :LOGIN $::idlerpg::Character $::idlerpg::Password"
-                return 0
-            }
-            if {$nick eq "$::botnick"} {
-                putlog "Sending LOGIN command to $::idlerpg::Bot"
+        if {$nick eq "$::botnick"} {
+            if {[onchan $::idlerpg:Bot $chan]} {
+                putlog "Identifying to $::idlerpg::Bot since we just connected..."
                 putserv "PRIVMSG $::idlerpg::Bot :LOGIN $::idlerpg::Character $::idlerpg::Password"
                 return 0
             }
         }
+        if {$nick eq "$::idlerpg::Bot"} {
+            putlog "Sending LOGIN command to $::idlerpg::Bot since it just returned..."
+            putserv "PRIVMSG $::idlerpg::Bot :LOGIN $::idlerpg::Character $::idlerpg::Password"
+            return 0
+        }
     }
-}
+}; # end of idlerpg namespace
 
-putlog "-= IdleRPG Auto Login v1.0 by PeGaSuS loaded =-"
+putlog "-= IdleRPG Auto Login v2.0 by PeGaSuS loaded =-"
