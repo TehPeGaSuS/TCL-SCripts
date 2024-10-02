@@ -25,15 +25,15 @@ namespace eval idlerpg {
     # Join
     bind join - "$::idlerpg::Chan *" ::idlerpg::idleJoin
 
+
     ### Procs
     proc idleJoin {nick uhost hand chan} {
         if {$nick eq "$::botnick"} {
-            if {[onchan $::idlerpg:Bot $chan]} {
-                putlog "Identifying to $::idlerpg::Bot since we just connected..."
-                putserv "PRIVMSG $::idlerpg::Bot :LOGIN $::idlerpg::Character $::idlerpg::Password"
-                return 0
-            }
+            putlog "Identifying to $::idlerpg::Bot since we just connected..."
+            putserv "PRIVMSG $::idlerpg::Bot :LOGIN $::idlerpg::Character $::idlerpg::Password"
+            return 0
         }
+
         if {$nick eq "$::idlerpg::Bot"} {
             putlog "Sending LOGIN command to $::idlerpg::Bot since it just returned..."
             putserv "PRIVMSG $::idlerpg::Bot :LOGIN $::idlerpg::Character $::idlerpg::Password"
