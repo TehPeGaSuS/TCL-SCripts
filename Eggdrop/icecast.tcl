@@ -13,9 +13,9 @@
 # - !icecast <on/off> - Enables/disables the ability to see the current  #
 #   music playing with the !music command                                #
 #                                                                        #
-# - !iceauto <on/off> - Enables/disables the automatic annoucement of    #
-#   the current music playing (check is done every minute, but the music #
-#   is only announced if it has changed                                  #
+# - !iceauto <all/hourly/off/status> - Enables/disables the automatic    #
+#   annoucement of the current music playing (check is done every minute #
+#   for `all`, but the music is only announced if it has changed)        #
 #------------------------------------------------------------------------#
 
 #-----------------------------------------------------------#
@@ -36,16 +36,17 @@ namespace eval icecast {
 	variable trigger "!"
 
 	# URL for the json page
-	variable jsonURL "https://your.radio.tld:8001/status-json.xsl"
+	variable jsonURL "http://radio.domain.tld:8000/status-json.xsl"
 
 	# Radio Name
-	variable radioName "Your Radio Name"
+	variable radioName "Your Radio"
 
 	# Radio URL
-	variable listenURL "https://your.radio.tld/"
+	variable listenURL "https://radio.domain.tld/"
 
 	# Binds
 	bind cron - "* * * * *" ::icecast::autoplaying
+	bind cron - "0 * * * *" ::icecast::hourly
 	bind pub - ${::icecast::trigger}music ::icecast::nowplaying
 	bind pub - ${::icecast::trigger}np ::icecast::nowplaying
 	bind pub - ${::icecast::trigger}icecast ::icecast::on_off
@@ -71,7 +72,8 @@ namespace eval icecast {
 
 	### Flags ###
 	setudef flag icecast
-	setudef flag iceauto
+	setudef flag iceall
+	setudef flag icehourly
 
 	### Last track ###
 	if {![info exists ::icecast::lastTrack]} {
@@ -88,7 +90,7 @@ namespace eval icecast {
 		::icecast::announce $chan
 	}
 
-	proc autoplaying {min hour day month dow} {
+	proc autoplaying {minute hour day month weekday} {
 		::icecast::announce all
 	}
 
@@ -119,9 +121,38 @@ namespace eval icecast {
 				set ::icecast::lastTrack "$title"
 
 				foreach chan [channels] {
-					if {[channel get $chan iceauto]} {
-						putserv "PRIVMSG $chan :\[$::icecast::radioName\] DJ: ${dj} :: Song: $title :: Tune in: $::icecast::listenURL"
+					if {[channel get $chan iceall]} {
+						if {[regexp c [getchanmode $chan]]} {
+							putserv "PRIVMSG $chan :\[$::icecast::radioName\] DJ: ${dj} :: Song: $title :: Tune in: $::icecast::listenURL"		
+						} else {
+							putserv "PRIVMSG $chan :\002\[\00302$::icecast::radioName\003\]\002 \002DJ:\002 ${dj} :: \002Song:\002 $title :: \002Tune in:\002 $::icecast::listenURL"
+						}
 					}
+				}
+			}
+		}
+	}
+
+	proc hourly {minute hour day month weekday} {
+
+		set token [::http::geturl "$::icecast::jsonURL" -timeout 10000]
+		set data [::http::data $token]
+		set datadict [::json::json2dict $data]
+		::http::cleanup $token
+
+		if {![dict exists $datadict icestats source]} {
+			return 0
+		}
+
+		set dj [dict get $datadict icestats source server_name]
+		set title [dict get $datadict icestats source title]
+		
+		foreach chan [channels] {
+			if {[channel get $chan icehourly]} {
+				if {[regexp c [getchanmode $chan]]} {
+					putserv "PRIVMSG $chan :\[$::icecast::radioName\] DJ: ${dj} :: Song: $title :: Tune in: $::icecast::listenURL"
+				} else {
+					putserv "PRIVMSG $chan :\002\[\00302$::icecast::radioName\003\]\002 \002DJ:\002 ${dj} :: \002Song:\002 $title :: \002Tune in:\002 $::icecast::listenURL"
 				}
 			}
 		}
@@ -136,26 +167,40 @@ namespace eval icecast {
 			return 0
 		}
 
-		if {$option eq "on"} {
-			if {[channel get $chan icecast]} {
-				putserv "PRIVMSG $chan :ERROR! Icecast already enabled on $chan"
-				return 0
-			} else {
-				channel set $chan +icecast
-				putserv "PRIVMSG $chan :Icecast enabled on $chan"
+		switch $option {
+			"on" {
+				if {[channel get $chan icecast]} {
+					putserv "PRIVMSG $chan :Icecast is already enabled on ${chan}."
+					return 0
+				} else {
+					channel set $chan +icecast
+					putserv "PRIVMSG $chan :Icecast is now enabled on ${chan}."
+					return 0
+				}
+			}
+			"off" {
+				if {![channel get $chan icecast]} {
+					putserv "PRIVMSG $chan :Icecast is already disabled on ${chan}."
+					return 0
+				} else {
+					channel set $chan -icecast
+					putserv "PRIVMSG $chan :Icecast is now disabled on ${chan}."
+					return 0
+				}
+			}
+			"status" {
+				if {[channel get $chan icecast]} {
+					set status "enabled"
+				} else {
+					set status "disabled"
+				}
+				putserv "PRIVMSG $chan :Icecast is $status on ${chan}."
 				return 0
 			}
-		} elseif {$option eq "off"} {
-			if {![channel get $chan icecast]} {
-				putserv "PRIVMSG $chan :ERROR! Icecast already disabled on $chan"
-				return 0
-			} else {
-				channel set $chan -icecast
-				putserv "PRIVMSG $chan :Icecast disabled on $chan"
-				return 0
+			"default" {
+				putserv "PRIVMSG $chan :ERROR! Syntax: ${::icecast::trigger}icecast on/off/status"
+				return
 			}
-		} else {
-			putserv "PRIVMSG $chan :ERROR! Syntax: ${::icecast::trigger}icecast on/off"
 		}
 	}
 
@@ -168,27 +213,67 @@ namespace eval icecast {
 			return 0
 		}
 
-		if {$option eq "on"} {
-			if {[channel get $chan iceauto]} {
-				putserv "PRIVMSG $chan :ERROR! Auto Icecast already enabled on $chan"
-				return 0
-			} else {
-				channel set $chan +iceauto
-				putserv "PRIVMSG $chan :Auto Icecast enabled on $chan"
-				return 0
-			}
-		} elseif {$option eq "off"} {
-			if {![channel get $chan iceauto]} {
-				putserv "PRIVMSG $chan :ERROR! Auto Icecast already disabled on $chan"
-				return 0
-			} else {
-				channel set $chan -iceauto
-				putserv "PRIVMSG $chan :Auto Icecast disabled on $chan"
+		switch $option {
+			"all" {
+				if {[channel get $chan iceall]} {
+					putserv "PRIVMSG $chan :ERROR! Auto Icecast (all) already enabled on ${chan}."
+					return 0
+				}
+				if {[channel get $chan icehourly]} {
+					channel set $chan -icehourly
+					channel set $chan +iceall
+					putserv "PRIVMSG $chan :Auto Icecast (all) enabled on ${chan}."
+					return 0
+				}
+				channel set $chan +iceall
+				putserv "PRIVMSG $chan :Auto Icecast (all) enabled on ${chan}."
 				return 0
 			}
-		} else {
-			putserv "PRIVMSG $chan :ERROR! Syntax: ${::icecast::trigger}iceauto on/off"
-			return 0
+			"hourly" {
+				if {[channel get $chan icehourly]} {
+					putserv "PRIVMSG $chan :ERROR! Auto Icecast (hourly) already enabled on ${chan}."
+					return 0
+				}
+				if {[channel get $chan iceall]} {
+					channel set $chan -iceall
+					channel set $chan +icehourly
+					putserv "PRIVMSG $chan :Auto Icecast (hourly) enabled on ${chan}."
+					return 0
+				}
+				channel set $chan +icehourly
+				putserv "PRIVMSG $chan :Auto Icecast (hourly) enabled on ${chan}."
+				return 0
+			}
+			"off" {
+				if {(![channel get $chan iceall] || ![channel get $chan icehourly])} {
+					putserv "PRIVMSG $chan :ERROR! Auto Icecast already disabled on ${chan}."
+					return 0
+				} else {
+					if {[channel get $chan iceall]} {
+						channel set $chan -iceall
+					}
+					if {[channel get $chan icehourly]} {
+						channel set $chan -icehourly
+					}
+					putserv "PRIVMSG $chan :Auto Icecast disabled on ${chan}."
+					return 0
+				}
+			}
+			"status" {
+				if {[channel get $chan icehourly]} {
+					set status "hourly"
+				} elseif {[channel get $chan iceall]} {
+					set status "all"
+				} else {
+					set status "disabled"
+				}
+				putserv "PRIVMSG $chan :Iceauto is $status on ${chan}."
+				return 0
+			}
+			"default" {
+				putserv "PRIVMSG $chan :ERROR! Syntax: ${::icecast::trigger}iceauto all/hourly/off/status"
+				return 0
+			}
 		}
 	}
 	putlog "-= icecast.tcl v1.2 by PeGaSuS loaded =-"
