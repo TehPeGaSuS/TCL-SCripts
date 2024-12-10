@@ -276,5 +276,5 @@ namespace eval icecast {
 			}
 		}
 	}
-	putlog "-= icecast.tcl v1.2 by PeGaSuS loaded =-"
+	putlog "-= icecast.tcl v1.3 by PeGaSuS loaded =-"
 }; # end of icecast space
