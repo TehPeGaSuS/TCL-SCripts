@@ -163,7 +163,7 @@ namespace eval icecast {
 		set option [lindex [split $text] 0]
 
 		if {![matchattr [nick2hand $nick] m]} {
-			putserv "PRIMSG $chan :ERROR! You don't have access, ${nick}!"
+			putserv "PRIVMSG $chan :ERROR! You don't have access, ${nick}!"
 			return 0
 		}
 
