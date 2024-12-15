@@ -131,6 +131,7 @@ namespace eval icecast {
 				}
 			}
 		}
+  		return 0
 	}
 
 	proc hourly {minute hour day month weekday} {
@@ -156,6 +157,7 @@ namespace eval icecast {
 				}
 			}
 		}
+  		return 0
 	}
 
 	proc on_off {nick uhost hand chan text} {
@@ -276,5 +278,5 @@ namespace eval icecast {
 			}
 		}
 	}
-	putlog "-= icecast.tcl v1.3 by PeGaSuS loaded =-"
+	putlog "-= icecast.tcl v1.4 by PeGaSuS loaded =-"
 }; # end of icecast space
