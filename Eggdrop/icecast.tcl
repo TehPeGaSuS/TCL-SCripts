@@ -36,13 +36,13 @@ namespace eval icecast {
 	variable trigger "!"
 
 	# URL for the json page
-	variable jsonURL "http://radio.domain.tld:8000/status-json.xsl"
+	variable jsonURL "https://radio.example.com:8080/status-json.xsl"
 
 	# Radio Name
-	variable radioName "Your Radio"
+	variable radioName "Radio Example"
 
 	# Radio URL
-	variable listenURL "https://radio.domain.tld/"
+	variable listenURL "https://radio.example.com/"
 
 	# Binds
 	bind cron - "* * * * *" ::icecast::autoplaying
@@ -247,20 +247,17 @@ namespace eval icecast {
 				return 0
 			}
 			"off" {
-				if {(![channel get $chan iceall] || ![channel get $chan icehourly])} {
-					putserv "PRIVMSG $chan :ERROR! Auto Icecast already disabled on ${chan}."
-					return 0
-				} else {
-					if {[channel get $chan iceall]} {
-						channel set $chan -iceall
-					}
-					if {[channel get $chan icehourly]} {
-						channel set $chan -icehourly
-					}
-					putserv "PRIVMSG $chan :Auto Icecast disabled on ${chan}."
-					return 0
-				}
-			}
+                if {[channel get $chan iceall]} {
+                    channel set $chan -iceall
+                    putserv "PRIVMSG $chan :Auto Icecast (all) disabled on ${chan}."
+                }
+                if {[channel get $chan icehourly]} {
+                    channel set $chan -icehourly
+                    putserv "PRIVMSG $chan :Auto Icecast (hourly) disabled on ${chan}."
+                }
+                putserv "PRIVMSG $chan :ERROR! Auto Icecast already disabled on ${chan}."
+            }
+                
 			"status" {
 				if {[channel get $chan icehourly]} {
 					set status "hourly"
@@ -278,5 +275,5 @@ namespace eval icecast {
 			}
 		}
 	}
-	putlog "-= icecast.tcl v1.4 by PeGaSuS loaded =-"
+	putlog "-= icecast.tcl v1.5 by PeGaSuS loaded =-"
 }; # end of icecast space
