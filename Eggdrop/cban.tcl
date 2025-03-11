@@ -155,7 +155,7 @@ namespace eval cban {
 	proc cban:pub {nick uhost hand chan text} {
 		set target "[lindex [split $text] 1]"		
 		
-		if {[matchstr "*.irccloud.com" [getchanhost $target $chan]]} {
+		if {([matchstr "uid*" [string trim [getchanhost $target $chan] ~]] || [matchstr "sid*" [string trim [getchanhost $target $chan] ~]])} {
 			set banmask "[maskhost ${target}![getchanhost $target $chan] 3]"
 		} else {
 			set banmask "[maskhost ${target}![getchanhost $target $chan] $::cban::banType]"
@@ -193,7 +193,7 @@ namespace eval cban {
 	proc tban:pub {nick uhost hand chan text} {
 		set target "[lindex [split $text] 0]"
 		
-		if {[matchstr "*.irccloud.com" [getchanhost $target $chan]]} {
+		if {([matchstr "uid*" [string trim [getchanhost $target $chan] ~]] || [matchstr "sid*" [string trim [getchanhost $target $chan] ~]])} {
 			set banmask "[maskhost ${target}![getchanhost $target $chan] 3]"
 		} else {
 			set banmask "[maskhost ${target}![getchanhost $target $chan] $::cban::banType]"
