@@ -44,12 +44,6 @@ namespace eval icecast {
 	# Time, in seconds, between each song change check
 	variable pollTime "15"
 
-	# Flag for the DJs
-	variable djFlag "V"
-
-	# Time, in minutes, to check if a source is connected?
-	variable sourceCheck "1"
-
 	# Binds
 	bind pub - ${::icecast::trigger}music ::icecast::nowplaying
 	bind pub - ${::icecast::trigger}np ::icecast::nowplaying
