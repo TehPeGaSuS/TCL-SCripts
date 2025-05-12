@@ -39,7 +39,7 @@ namespace eval icecast {
 	variable radioName "Your Radio"
 
 	# Radio URL
-	variable listenURL "https://onefm.sytes.net/"
+	variable listenURL "https://your_radio.example.com/"
 
 	# Time, in seconds, between each song change check
 	variable pollTime "15"
@@ -56,9 +56,6 @@ namespace eval icecast {
 	bind pub - ${::icecast::trigger}icecast ::icecast::on_off
 	bind pub - ${::icecast::trigger}addchan ::icecast::addchannel
 	bind pub - ${::icecast::trigger}delchan ::icecast::delchannel
-	bind pub - ${::icecast::trigger}stop ::icecast::autodjstop
-	bind pub - ${::icecast::trigger}start ::icecast::autodjstart
-	bind cron - "* * * * *" ::icecast::checksource
 
 	#--------------------------------------------------------------------------------------------------------------#
 	#                        DON'T TOUCH ANYTHING BELOW UNLESS YOU KNOW WHAT YOU ARE DOING                         #
