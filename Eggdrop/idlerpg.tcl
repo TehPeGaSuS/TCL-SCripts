@@ -6,8 +6,7 @@
 # This scripts makes your bot automatically log in into your IdleRPG account #
 # Just edit the script to fit your needs and load it to your bot.            #
 #                                                                            #
-# You can also register your character and change its alignment with the     #
-# following private message commands:                                        #
+# You can also use the following private commands:                           #
 #                                                                            #
 #   > register - Registers your character                                    #
 #   > align <alignment> - Changes your character alignment                   #
@@ -48,18 +47,16 @@ namespace eval idlerpg {
 
     ### Procs
     proc idleJoin {nick uhost hand chan} {
-        if {$chan eq $::idleChan} {
-            if {$nick eq "$::botnick"} {
-                putloglev o * "Identifying to $::idlerpg::idleBot since we just connected..."
-                putserv "PRIVMSG $::idlerpg::idleBot :LOGIN $::idlerpg::idleChar $::idlerpg::idlePass"
-                return 0
-            }
+        if {[isbotnick $nick]} {
+            putloglev o * "Identifying to $::idlerpg::idleBot since we just connected..."
+            putserv "PRIVMSG $::idlerpg::idleBot :LOGIN $::idlerpg::idleChar $::idlerpg::idlePass"
+            return 0
+        }
 
-            if {$nick eq "$::idlerpg::idleBot"} {
-                putloglev o * "Sending LOGIN command to $::idlerpg::idleBot since it just returned..."
-                putserv "PRIVMSG $::idlerpg::idleBot :LOGIN $::idlerpg::idleChar $::idlerpg::idlePass"
-                return 0
-            }
+        if {$nick eq "$::idlerpg::idleBot"} {
+            putloglev o * "Sending LOGIN command to $::idlerpg::idleBot since it just returned..."
+            putserv "PRIVMSG $::idlerpg::idleBot :LOGIN $::idlerpg::idleChar $::idlerpg::idlePass"
+            return 0
         }
     }
 
