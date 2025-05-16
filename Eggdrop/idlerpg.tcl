@@ -9,7 +9,7 @@
 # You can also use the following private commands:                           #
 #                                                                            #
 #   > register - Registers your character                                    #
-#   > align <alignment> - Changes your character alignment                   #
+#   > align <neutral|good|evil> - Changes your character alignment           #
 #   > login - Logs in your character                                         #
 #                                                                            #
 # HAPPY IDLING!!!                                                            #
