@@ -33,7 +33,7 @@ namespace eval idlerpg {
 
     ### Binds
     # Join (automatic)
-    bind join - "$::idlerpg::Chan *" ::idlerpg::idleJoin
+    bind join - "$::idlerpg::idleChan *" ::idlerpg::idleJoin
 
     # Login (private message command)
     bind msg login ::idlerpg::idleLogin
