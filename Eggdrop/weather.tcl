@@ -19,7 +19,7 @@ namespace eval weather {
 
     # Binds
     bind pub ${::weather::wTrigger}weather ::weather::WeatherOut
-    bind pub ${::weather::wTrigger}w ::weather::WeatherOut«
+    bind pub ${::weather::wTrigger}w ::weather::WeatherOut
 
     # Procs
     proc WeatherOut {nick uhost hand chan text} {
@@ -33,7 +33,7 @@ namespace eval weather {
 
         if {$wLocation eq ""} {
             putserv "PRIVMSG $chan :ERROR! Syntax ${::weather::wTrigger}weather <location> \(city,country\) \[--units <units \(metric or imperial\)>\]"
-            putserv "PRIVSMG $chan :Example: ${::weather::wTrigger}weather Colorado,US --units metric"
+            putserv "PRIVMSG $chan :Example: ${::weather::wTrigger}weather Colorado,US --units metric"
             return 0
         }
 
