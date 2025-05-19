@@ -36,7 +36,7 @@ namespace eval weather {
         set code [dict get $datadict cod]
         if {$code != "200"} {
             set message [dict get $datadict message]
-            putserv "PRIVMSG $chan :ERROR! $message"
+            putserv "PRIVMSG $chan :ERROR! ${wLocation}: $message"
             return 0
         }
 
