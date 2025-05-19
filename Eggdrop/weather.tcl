@@ -14,33 +14,32 @@ namespace eval weather {
     # Api Key (get your own at https://openweathermap.org/api)
     variable wApiKey ""
 
-    # Default metric units (metric or imperial)
-    variable wDefMetrics "metric"
-
     # Binds
     bind pub ${::weather::wTrigger}weather ::weather::WeatherOut
     bind pub ${::weather::wTrigger}w ::weather::WeatherOut
 
     # Procs
     proc WeatherOut {nick uhost hand chan text} {
-        set wLocation [lindex [split $text] 0]
-        set wMetrics [lindex [split $text] 2]
+        set wLocation $text
 
-
-        if {$wMetrics eq "" || $wMetrics ne "metric" || $wMetrics ne "imperial"} {
-            set wMetrics "$::weather::wDefMetrics"
-        }
 
         if {$wLocation eq ""} {
-            putserv "PRIVMSG $chan :ERROR! Syntax ${::weather::wTrigger}weather <location> \(city,country\) \[--units <units \(metric or imperial\)>\]"
-            putserv "PRIVMSG $chan :Example: ${::weather::wTrigger}weather Colorado,US --units metric"
+            putserv "PRIVMSG $chan :ERROR! Syntax ${::weather::wTrigger}weather <location> \(city,country\)"
+            putserv "PRIVMSG $chan :Example: ${::weather::wTrigger}weather North Carolina,US"
             return 0
         }
 
-        set token [::http::geturl "http://api.openweathermap.org/data/2.5/weather?[http::formatQuery q $wLocation appid $::weather::wApiKey units $wMetrics]" -timeout 10000]
+        set token [::http::geturl "http://api.openweathermap.org/data/2.5/weather?[http::formatQuery q $wLocation appid $::weather::wApiKey]" -timeout 10000]
         set data [::http::data $token]
         set datadict [::json::json2dict $data]
         ::http::cleanup $token
+
+        set code [dict get $datadict cod]
+        if {$code != "200"} {
+            set message [dict get $datadict message]
+            putserv "PRIVMSG $chan :ERROR! $message"
+            return 0
+        }
 
         set name [dict get $datadict name]
         set description [dict get $datadict weather description]
@@ -51,15 +50,13 @@ namespace eval weather {
         set humidity [dict get $datadict main humidity]
         set speed [dict get $datadict wind speed]
 
-        if {$wMetrics eq "metric"} {
-            set tempUnit "C"
-            set windUnit "kmh"
-        } else {
-            set tempUnit "F"
-            set windUnit "mph"
-        }
+        set tempc [expr {($temp - 32) * 5.0 / 9}]
+        set feels_likec [expr {($feels_like - 32) * 5.0 / 9}]
+        set temp_minc [expr {($temp_min - 32) * 5.0 / 9}]
+        set temp_maxc [expr {($temp_max - 32) * 5.0 / 9}]
+        set speedc [expr {$speed * 1.60934}]
 
-        putserv "PRIVMSG $chan :Location: $name :: Current: $description :: Temp: ${temp}$tempUnit \(Max: ${temp_max}$tempUnit - Min: ${temp_min}$tempUnit\) :: Feels like: ${feels_like}$tempUnit :: Humidity: ${humidity}% :: Wind: $speed $windUnit"
+        putserv "PRIVMSG $chan :Location: $name :: Current: $description :: Temp: ${temp}F / ${tempc}C \(Max: ${temp_max}F / ${temp_maxc}C - Min: ${temp_min}F / ${temp_minc}C \) :: Feels like: ${feels_like}F / ${feels_likec}C :: Humidity: ${humidity}% :: Wind: ${speed} mph / ${speedc} "
         return 0
     }
 }
