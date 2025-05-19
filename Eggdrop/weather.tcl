@@ -24,8 +24,7 @@ namespace eval weather {
 
 
         if {$wLocation eq ""} {
-            putserv "PRIVMSG $chan :ERROR! Syntax ${::weather::wTrigger}weather <location> \(city,country\)"
-            putserv "PRIVMSG $chan :Example: ${::weather::wTrigger}weather North Carolina,US"
+            putserv "PRIVMSG $chan :ERROR! Syntax ${::weather::wTrigger}weather <location> \(city,country\). Example: ${::weather::wTrigger}weather North Carolina,US"
             return 0
         }
 
