@@ -36,7 +36,7 @@ namespace eval idlerpg {
     bind join - "$::idlerpg::idleChan *" ::idlerpg::idleJoin
 
     # Login (private message command)
-    bind msg login ::idlerpg::idleLogin
+    bind msg - login ::idlerpg::idleLogin
 
     # Register Character (private message command)
     bind msg - register ::idlerpg::idleRegister
