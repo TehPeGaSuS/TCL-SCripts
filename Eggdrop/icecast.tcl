@@ -98,7 +98,7 @@ namespace eval icecast {
 	}
 
 	proc announce {tchan} {
-		set datadict [::icecast::getJSon]
+		set datadict [::icecast::getJSON]
 
 		if {![dict exists $datadict icestats source]} {
 			if {$tchan ne "all" } {
