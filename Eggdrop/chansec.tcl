@@ -142,7 +142,7 @@ namespace eval chansec {
 	bind mode * "$::chansec::jailChan +*" ::chansec::jail_mode
 
 	proc jail_mode {nick uhost hand chan mode target} {
-		if {$target eq "" || [isbotnick $target] || ![onchan $target $chan]} {
+		if {![isbotnick $target]} {
 			return 0
 		}
 
@@ -152,5 +152,5 @@ namespace eval chansec {
 		}
 	}
 
-	putlog "-= Channel Security Code v1.6 by PeGaSuS loaded (02/09/2024-19:15) =-"
+	putlog "-= Channel Security Code v1.7 by PeGaSuS loaded (11/11/2025-17:58) =-"
 }; #end of chansec namespace
