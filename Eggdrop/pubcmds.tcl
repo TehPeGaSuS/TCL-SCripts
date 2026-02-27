@@ -3,7 +3,7 @@
 ##########
 # Author: PeGaSuS
 # IRC: irc.ptirc.org +6697 #eggdrop
-# GitHub: https://github.com/PeGaSuS-Coder/TCL-SCripts
+# GitHub: https://github.com/TehPeGaSuS/TCL-SCripts
 ##########
 # This script needs eggdrop 1.9 (currently under development).
 # It won't work in lower versions.
