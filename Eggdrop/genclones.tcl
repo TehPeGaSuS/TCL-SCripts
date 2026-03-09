@@ -136,7 +136,7 @@ namespace eval genclones {
 		
 		variable clonenum "[lindex [split $text] 0]"
 		
-		if {$clonenum eq ""} {
+		if {$clonenum eq "" || ![string is digit -strict $clonenum]} {
 			putnow "PRIVMSG $chan :ERROR! Syntax: ${::genclones::cloneTrigger}genclone <number of clones>"
 			return
 		}
