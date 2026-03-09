@@ -196,7 +196,7 @@ namespace eval genclones {
 		
 		foreach clone [split [userlist]] {
 			if {[matchattr [nick2hand $clone] +X]} {
-				putnow "PRIVMSG *controlpanel :AddChan $clone $::genclones::netname $::genclones::chanclone"
+				putnow "PRIVMSG *controlpanel :AddChan $clone $::genclones::netname $tchan"
 			}
 		}
 		return
@@ -219,7 +219,7 @@ namespace eval genclones {
 		
 		foreach clone [split [userlist]] {
 			if {[matchattr [nick2hand $clone] +X]} {
-				putnow "PRIVMSG *controlpanel :DelChan $clone $::genclones::netname $::genclones::chanclone"
+				putnow "PRIVMSG *controlpanel :DelChan $clone $::genclones::netname $tchan"
 			}
 		}
 	}
