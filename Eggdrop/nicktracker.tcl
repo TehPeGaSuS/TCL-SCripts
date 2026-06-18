@@ -2,7 +2,7 @@
 # Nickname/Uhost tracker script
 # Egghelp version, donations to slennox are welcomed. :P
 # Original version from speechles (?)
-# Enchanced by PeGaSuS
+# Enhanced by PeGaSuS
 #####
 
 #####
