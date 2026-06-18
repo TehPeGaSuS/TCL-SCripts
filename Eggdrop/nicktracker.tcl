@@ -44,16 +44,17 @@ set nUsed "ha usato"
 set nOther "altri"
 
 ##########
-# Send nicktracking information to the specified channel(s)/nickname(s). You can set several destinations
+# Send nicktracking information to the specified channel(s). You can set several destinations
 # Example
 # set channelmap {
 #	"#channel1" "#channel2"
-#	"#otherchannel" "#channel3 #channel4 somenick"
+#	"#otherchannel" "#channel3 #channel4"
 # }
 #
 ##########
 set channelmap {
-    "#thelounge" "#thelounge-staff"
+    "#thelounge" "#thelounge-ops"
+    "#amicizia" "#camelot"
 }
 
 ##########
@@ -164,8 +165,10 @@ proc join_onjoin {nick uhost hand chan} {
         if {$ch in [dict keys $channelmap]} {
             set bkc [dict get $channelmap $ch]
             foreach bkct [split $bkc] {
+                set nocolor 0
+                catch {set nocolor [regexp {\+[^ ]*c} [getchanmode $bkct]]}
                 foreach c $chunks {
-                    if {[regexp {\+[^ ]*c} [getchanmode $bkct]]} {
+                    if {$nocolor} {
                         putquick "PRIVMSG $bkct :\[$chan\] ${nick} ${nUsed}: $c"
                     } else {
                         putquick "PRIVMSG $bkct :\[\00302$chan\003\] \00304${nick}\003 ${nUsed}: \00304$c\003"
@@ -176,10 +179,13 @@ proc join_onjoin {nick uhost hand chan} {
             # Send a notice to channel operators if bot is chanop
             if {[isop $botnick $ch]} {
                 foreach c $chunks {
-                    if {[regexp {\+[^ ]*c} [getchanmode $ch]]} {
-                        putquick "NOTICE @$ch :${nick} ${nUsed}: $c"
-                    } else {
-                        putquick "NOTICE @$ch :\00304${nick}\003 ha usato: \00304$c\003"
+                    set nocolor [regexp {\+[^ ]*c} [getchanmode $bkct]]
+                    foreach c $chunks {
+                        if {$nocolor} {
+                            putquick "PRIVMSG $bkct :\[$chan\] ${nick} ${nUsed}: $c"
+                        } else {
+                            putquick "PRIVMSG $bkct :\[\00302$chan\003\] \00304${nick}\003 ${nUsed}: \00304$c\003"
+                        }
                     }
                 }
             } else {
@@ -187,7 +193,7 @@ proc join_onjoin {nick uhost hand chan} {
                 if {[llength $alertnicks]} {
                     foreach n [split $alertnicks] {
                         foreach c $chunks {
-                            putquick "PRIVMSG $n :\[\00302$chan\003\] \00304${nick}\003 ha usato: \00304$c\003"
+                            putquick "PRIVMSG $n :\[\00302$chan\003\] \00304${nick}\003 ${nused} \00304$c\003"
                         }
                     }
                 }
