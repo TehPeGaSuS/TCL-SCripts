@@ -1,5 +1,5 @@
 #####
-# Nickname/Uhost tracker script
+# Nickname/Uhost v2 tracker script
 # Egghelp version, donations to slennox are welcomed. :P
 # Original version from speechles (?)
 # Enhanced by PeGaSuS
@@ -23,8 +23,9 @@ set dupes 0
 
 ##########
 # Maximum number of nicks shown per output line
+# Recommended value is 10
 ##########
-set nicks_per_line 15
+set nicks_per_line 10
 
 ##########
 # Maximum number of lines the bot will output per join/nick-change event
@@ -32,6 +33,15 @@ set nicks_per_line 15
 # 0 = unlimited
 ##########
 set max_output_lines 5
+
+##########
+# Set here the words in your language
+##########
+### Also used
+set nUsed "ha usato"
+
+### Other
+set nOther "altri"
 
 ##########
 # Send nicktracking information to the specified channel(s)/nickname(s). You can set several destinations
@@ -43,8 +53,7 @@ set max_output_lines 5
 #
 ##########
 set channelmap {
-    "#amicizia" "#camelot"
-    "#thelounge" "#thelounge-ops"
+    "#thelounge" "#thelounge-staff"
 }
 
 ##########
@@ -93,7 +102,7 @@ proc nick_nickchange {nick uhost hand chan newnick} {
 # check for joins
 ##########
 proc join_onjoin {nick uhost hand chan} {
-    global botnick dupes channelmap list_length alertnicks nicks_per_line max_output_lines
+    global botnick dupes channelmap list_length alertnicks nicks_per_line max_output_lines nUsed nOther
     if {![channel get $chan "nicktrack"]} {
         return 0
     }
@@ -104,7 +113,7 @@ proc join_onjoin {nick uhost hand chan} {
 
     # keep everything lowercase for simplicity.
     set ch [strlwr $chan]
-    set filename "[string trim "$ch" #]_nicklist.txt"
+    set filename "[string trim $ch #]_nicklist.txt"
     set uhost [strlwr $uhost]
 
     # read the file
@@ -141,14 +150,14 @@ proc join_onjoin {nick uhost hand chan} {
                 set displaylist [lrange $displaylist 0 [expr {$max_shown - 1}]]
             }
         }
-
+ 
         set chunks [list]
         for {set i 0} {$i < [llength $displaylist]} {incr i $nicks_per_line} {
             lappend chunks [join [lrange $displaylist $i [expr {$i + $nicks_per_line - 1}]] { }]
         }
         if {$remaining > 0 && [llength $chunks]} {
             set last [expr {[llength $chunks] - 1}]
-            lset chunks $last "[lindex $chunks $last] (+$remaining altri)"
+            lset chunks $last "[lindex $chunks $last] (+$remaining ${nOther})"
         }
 
         # Send messages to the defined channels
@@ -156,21 +165,29 @@ proc join_onjoin {nick uhost hand chan} {
             set bkc [dict get $channelmap $ch]
             foreach bkct [split $bkc] {
                 foreach c $chunks {
-                    putquick "PRIVMSG $bkct :\[\00302$chan\003\] \00304$nick\003 ha usato \00304$c\003"
+                    if {[regexp {\+[^ ]*c} [getchanmode $bkct]]} {
+                        putquick "PRIVMSG $bkct :\[$chan\] ${nick} ${nUsed}: $c"
+                    } else {
+                        putquick "PRIVMSG $bkct :\[\00302$chan\003\] \00304${nick}\003 ${nUsed}: \00304$c\003"
+                    }
                 }
             }
         } else {
             # Send a notice to channel operators if bot is chanop
             if {[isop $botnick $ch]} {
                 foreach c $chunks {
-                    putquick "NOTICE @$ch :\00304$nick\003 ha usato: \00304$c\003"
+                    if {[regexp {\+[^ ]*c} [getchanmode $ch]]} {
+                        putquick "NOTICE @$ch :${nick} ${nUsed}: $c"
+                    } else {
+                        putquick "NOTICE @$ch :\00304${nick}\003 ha usato: \00304$c\003"
+                    }
                 }
             } else {
                 # Send a message to the nicks on the list if none of the conditions above is met
                 if {[llength $alertnicks]} {
                     foreach n [split $alertnicks] {
                         foreach c $chunks {
-                            putquick "PRIVMSG $n :\[\00302$chan\003\] \00304$nick\003 ha usato: \00304$c\003"
+                            putquick "PRIVMSG $n :\[\00302$chan\003\] \00304${nick}\003 ha usato: \00304$c\003"
                         }
                     }
                 }
@@ -200,4 +217,4 @@ proc join_onjoin {nick uhost hand chan} {
     return 0
 }
 
-putlog "Nickname/Uhost tracker enabled."
+putlog "Nickname/Uhost v2 tracker enabled."
