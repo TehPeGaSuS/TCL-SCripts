@@ -7,9 +7,12 @@
 
 #####
 # We need at least TCL >=8.5 due to the -nocase in lsearch
-# Thanks mezen for the reminder and for the split_list procedure
+# Thanks mezen for the reminder
 #####
-package require Tcl 8.5
+if {[catch {package require Tcl 8.5} err]} {
+    putlog "ERROR: Tcl 8.5 or newer is required — unloading script."
+    return
+}
 
 ##########
 # should duplicate nicknames be allowed?
@@ -19,27 +22,43 @@ package require Tcl 8.5
 set dupes 0
 
 ##########
-# How many nicks to show? (0 = all nicks)
+# Maximum number of nicks shown per output line
 ##########
-set list_length "15"
+set nicks_per_line 15
 
 ##########
-# Map channels to send the message to a backchan
+# Maximum number of lines the bot will output per join/nick-change event
+##########
+# 0 = unlimited
+##########
+set max_output_lines 5
+
+##########
+# Send nicktracking information to the specified channel(s)/nickname(s). You can set several destinations
+# Example
+# set channelmap {
+#	"#channel1" "#channel2"
+#	"#otherchannel" "#channel3 #channel4 somenick"
+# }
+#
 ##########
 set channelmap {
-	"#channel" "#back_channel"
-	"#channel2" "#channel2-staff"
-	"#channel3" "#channel3-ops"
+    "#amicizia" "#camelot"
+    "#thelounge" "#thelounge-ops"
 }
 
+##########
 # Nicks to alert in case the channel doesn't have a backchan or there's no
 # channel -> backchan mapping
-set alertnicks "me you others"
+##########
+set alertnicks {
+    "NullPointer"
+}
 
 ##########
 # Binds
 ##########
-bind nick - * nick_nickchange
+#bind nick - * nick_nickchange
 bind join - * join_onjoin
 ##########
 # End of binds
@@ -55,133 +74,128 @@ setudef flag nicktrack
 ##########
 
 ##########
-# Splitting lists
-##########
-proc split_list {list n} {
-	set lines {}
-	set line {}
-	set m [llength $list]
-	for {set i 0} {$i < $m} {incr i} {
-		set item [lindex $list $i]
-		lappend line $item
-		if {[string length $line] > $n || $i == [expr {$m-1}]} {
-			# split here
-			lappend lines $line
-			set line {}
-		}
-	}
-	return $lines
-}
-
-##########
 # check for nick changes
 ##########
 proc nick_nickchange {nick uhost hand chan newnick} {
-	if {![channel get $chan "nicktrack"]} {
-		return 0
-	}
-	join_onjoin $newnick $uhost $hand $chan
-	return 0
+    if {![channel get $chan "nicktrack"]} {
+        return 0
+    }
+
+    if {$nick eq "$::botnick"} {
+        return 0
+    }
+
+    join_onjoin $newnick $uhost $hand $chan
+    return 0
 }
 
 ##########
 # check for joins
 ##########
 proc join_onjoin {nick uhost hand chan} {
-	global botnick dupes channelmap list_length alertnicks
-	if {![channel get $chan "nicktrack"]} {  return 0  }
+    global botnick dupes channelmap list_length alertnicks nicks_per_line max_output_lines
+    if {![channel get $chan "nicktrack"]} {
+        return 0
+    }
 
-	# keep everything lowercase for simplicity.
-	set ch [strlwr $chan]
-	set filename "[string trim "$ch" #]_nicklist.txt"
-	# We need to exempt at least IRCCloud from matching only by IP
-	if {[matchstr "*uid*" $uhost] || [matchstr "*sid*" $uhost]} {
-		set uhost [strlwr $uhost]
-	} else {
-		set uhost [strlwr [maskhost [getchanhost $nick $chan] 2]]
-	}
-	# read the file
-	if {![file exists $filename]} {
-		set file [open $filename "w"]
-		close $file
-	}
+    if {$nick eq "$::botnick"} {
+        return 0
+    }
 
-	set file [open $filename "r"]
-	set text [split [read $file] \n]
-	close $file
-	# locate a duplicate host
-	set found [lsearch -glob $text "*<$uhost"]
-	if {$found < 0} {
-		# host isn't found so let's append the nick and host to our file
-		set file [open $filename "a"]
-		puts $file "$nick<$uhost"
-		close $file
-	} else {
-		# the host exists, so set our list of nicks for that host
-		set nicks [lindex [split [lindex $text $found] "<"] 0]
-		# is the nick already known for that host?
-		set nlist [split $nicks ","]
-		if {[set pos [lsearch -nocase $nlist $nick]] != -1} { set nlist [lreplace $nlist $pos $pos] }
+    # keep everything lowercase for simplicity.
+    set ch [strlwr $chan]
+    set filename "[string trim "$ch" #]_nicklist.txt"
+    set uhost [strlwr $uhost]
 
-		if {$list_length == 0} {
-			set final "$nlist"
-		} else {
-			set final [lrange $nlist 0 [expr {$list_length - 1}]]
-		}
+    # read the file
+    if {![file exists $filename]} {
+        set file [open $filename "w"]
+        close $file
+    }
 
-		# MAKE SURE TO READ THE COMMENTS BELOW
+    set file [open $filename "r"]
+    set text [split [read $file] \n]
+    close $file
+    # locate a duplicate host
+    set found [lsearch -glob $text "*<$uhost"]
+    if {$found < 0} {
+        # host isn't found so let's append the nick and host to our file
+        set file [open $filename "a"]
+        puts $file "$nick<$uhost"
+        close $file
+    } else {
+        # the host exists, so set our list of nicks for that host
+        set nicks [lindex [split [lindex $text $found] "<"] 0]
+        # is the nick already known for that host?
+        set nlist [split $nicks ","]
+        if {[set pos [lsearch -nocase $nlist $nick]] != -1} { set nlist [lreplace $nlist $pos $pos] }
 
-		if {[string length [join $final]]} {
-			if {$ch in [dict keys $channelmap]} {
-				set bkc [dict get $channelmap $ch]
-				if {[regexp c [getchanmode $bkc]]} {
-					foreach line [split_list $final 150] {
-						putserv "PRIVMSG $bkc :\[$chan\] $nick ha usato: [join $line " "]"
-					}
-				} else {
-					foreach line [split_list $final 150] {
-						putserv "PRIVMSG $bkc :\00302\[$chan\]\003 \002\00303$nick\003\002 ha usato: \00304[join $line " "]"
-					}
-				}
-			} else {
-				if {[isop $botnick $chan]} {
-					if {[regexp c [getchanmode $ch]]} {
-						foreach line [split_list $final 150] {
-							putserv "NOTICE @$ch :$nick ha usato: [join $line " "]"
-						}
-					} else {
-						foreach line [split_list $final 150] {
-							putserv "NOTICE @$ch :\002\00303$nick\003\002 ha usato: \00304[join $line " "]"
-						}
-					}
-				} else {
-					foreach n [split $alertnicks] {
-						foreach line [split_list $final 150] {
-							putserv "PRIVMSG $n :\00302\[$chan\]\003 \002\00303$nick\003\002 ha usato: \00304[join $line " "]"
-						}
-					}
-				}
-			}
-		}
+        # Build the (possibly truncated) display list, then chunk it into
+        # groups of $nicks_per_line, capped at $max_output_lines lines total.
+        set displaylist $nlist
+        set remaining 0
+        if {$max_output_lines > 0} {
+            set max_shown [expr {$nicks_per_line * $max_output_lines}]
+            if {[llength $displaylist] > $max_shown} {
+                set remaining [expr {[llength $displaylist] - $max_shown}]
+                set displaylist [lrange $displaylist 0 [expr {$max_shown - 1}]]
+            }
+        }
 
-		set known [lsearch -exact -nocase [split $nicks ","] $nick]
-		if {($known != -1) && ($dupes < 1)} {
-			# if the nick is known return
-			return
-		} else {
-			# otherwise add the nick to the nicks for that host
-			set text [lreplace $text $found $found "$nick,$nicks<$uhost"]
-		}
-		# now lets write the new list to the file
-		set file [open $filename "w"]
-		foreach line $text {
-			if {[string length $line]} {
-				puts $file "$line"
-			}
-		}
-		close $file
-	}
-	return 0
+        set chunks [list]
+        for {set i 0} {$i < [llength $displaylist]} {incr i $nicks_per_line} {
+            lappend chunks [join [lrange $displaylist $i [expr {$i + $nicks_per_line - 1}]] { }]
+        }
+        if {$remaining > 0 && [llength $chunks]} {
+            set last [expr {[llength $chunks] - 1}]
+            lset chunks $last "[lindex $chunks $last] (+$remaining altri)"
+        }
+
+        # Send messages to the defined channels
+        if {$ch in [dict keys $channelmap]} {
+            set bkc [dict get $channelmap $ch]
+            foreach bkct [split $bkc] {
+                foreach c $chunks {
+                    putquick "PRIVMSG $bkct :\[\00302$chan\003\] \00304$nick\003 ha usato \00304$c\003"
+                }
+            }
+        } else {
+            # Send a notice to channel operators if bot is chanop
+            if {[isop $botnick $ch]} {
+                foreach c $chunks {
+                    putquick "NOTICE @$ch :\00304$nick\003 ha usato: \00304$c\003"
+                }
+            } else {
+                # Send a message to the nicks on the list if none of the conditions above is met
+                foreach n [split $alertnicks] {
+                    foreach c $chunks {
+                        putquick "PRIVMSG $n :\[\00302$chan\003\] \00304$nick\003 ha usato: \00304$c\003"
+                    }
+                }
+            }
+        }
+
+        # To make it output to partyline remove the # the begins the line below.
+        #if {[string length [join $nlist]]} { putloglev d * "*** $nick on $chan is also known as :[join $nlist ", "]." }
+
+        set known [lsearch -exact -nocase [split $nicks ","] $nick]
+        if {($known != -1) && ($dupes < 1)} {
+            # if the nick is known return
+            return
+        } else {
+            # otherwise add the nick to the nicks for that host
+            set text [lreplace $text $found $found "$nick,$nicks<$uhost"]
+        }
+        # now lets write the new list to the file
+        set file [open $filename "w"]
+        foreach line $text {
+            if {[string length $line]} {
+                puts $file "$line"
+            }
+        }
+        close $file
+    }
+    return 0
 }
 
 putlog "Nickname/Uhost tracker enabled."
