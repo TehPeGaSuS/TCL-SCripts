@@ -167,9 +167,11 @@ proc join_onjoin {nick uhost hand chan} {
                 }
             } else {
                 # Send a message to the nicks on the list if none of the conditions above is met
-                foreach n [split $alertnicks] {
-                    foreach c $chunks {
-                        putquick "PRIVMSG $n :\[\00302$chan\003\] \00304$nick\003 ha usato: \00304$c\003"
+                if {[llength $alertnicks]} {
+                    foreach n [split $alertnicks] {
+                        foreach c $chunks {
+                            putquick "PRIVMSG $n :\[\00302$chan\003\] \00304$nick\003 ha usato: \00304$c\003"
+                        }
                     }
                 }
             }
